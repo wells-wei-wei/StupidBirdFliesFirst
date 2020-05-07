@@ -8,7 +8,7 @@
  -->
 # 笨鸟先飞——我的知识库
 
-- C++基础知识
+- [C++基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/C%2B%2BFundamental.md)
 <!--
 ![C++fundamental](C++fundamental.jpg)
 ![cs-fundamental](cs-fundamental.jpg)
