@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-07 22:53:46
- * @LastEditTime: 2020-05-07 23:52:52
+ * @LastEditTime: 2020-05-08 10:06:27
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\MachineLearning\U-net.md
@@ -36,8 +36,9 @@ L_{out}=[\frac{L_{in}-k}{step}]+1
 $$
 ### 反卷积后的特征图大小
 - 输入特征图大小：$L_{in}×L_{in}$
-- 池化核大小：$k×k$
-- 步长：$step$（一般跟池化核一样）
+- 卷积核大小：$k×k$
+- 步长：$step$
+- padding：$p$
 - 输出特征图大小：$L_{out}×L_{out}$
 $$
 L_{out}=(L_{in}-1)×step-2p+k
