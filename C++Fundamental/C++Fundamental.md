@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-05-09 17:56:59
+ * @LastEditTime: 2020-05-10 19:40:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -426,3 +426,22 @@ for( atuo& r : v){//这里的r前面的&表示接下来的语句可以对数组v
 
 ## while和dowhile
 &emsp;&emsp;基本也没什么好说的，这俩的区别在于while在进入循环之前进行判断，dowhile是先做一轮，然后再判断。
+
+## 逻辑运算符
+- && 与
+- || 或
+- ! 非
+
+## 字符函数库
+这个库来自C语言，是一个与字符相关的非常方便的函数软件包，定义在cctype.h中：
+![cctype](cctype.jpg)
+
+## ?:运算符
+```
+3==9?25:34;\\问好前面用来判断，若为true则表达式为25，若为false则表达式为34
+```
+
+## 分支语句
+### if else
+### switch case
+switch语句本身不为了取值范围而设计，每一个case就是一个单独的标签，可以是一个具体值，也可以是枚举。
