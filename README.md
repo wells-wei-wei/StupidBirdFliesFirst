@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-05-12 21:43:07
+ * @LastEditTime: 2020-05-18 15:52:30
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -14,7 +14,9 @@
   - [梯度下降](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/GD.pdf)
   - [感知机](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/Perceptron.pdf)
   - [U-net](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/U-net/U-net.md)
-
+- 各种命令行命令
+  - [tmux](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/tmux.md)
+  - [OpenposeDemo_in_Windows](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/openposedemo_win.md)
 <!--
 ![C++fundamental](C++fundamental.jpg)
 ![cs-fundamental](cs-fundamental.jpg)
