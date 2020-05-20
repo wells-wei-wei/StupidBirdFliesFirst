@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-05-19 21:28:42
+ * @LastEditTime: 2020-05-20 23:53:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -865,3 +865,5 @@ using namespace Wells;
 这时在当前区域内就所有的Wells的函数和变量都可以直接用了，这using就是using编译指令。
 
 &emsp;&emsp;需要注意的是，如果在一个函数中使用了using编译指令，也并不是说函数内就不能声明相同名字的变量了，因为全局名称空间的作用域还是全局，所以就算在函数中using namespace以后也还是全局作用域，所以这时如果在函数局部声明了一个同名变量，就会隐藏全局的变量，也就是只能用局部的这个不能用名称空间中的（当然老老实实写成Wells::pill还是能用的）。
+
+## 类
