@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-05-23 21:21:36
+ * @LastEditTime: 2020-05-24 23:29:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -1076,6 +1076,132 @@ private:
 ```
 这里就是将后面的构造函数全部交给了第一个构造函数，最后一个除了委托以外还执行了自己的内容，在执行完委托函数以后才会执行自己的内容。
 
+#### 拷贝初始化和直接初始化
+&emsp;&emsp;这主要是类初始化过程的不同：直接初始化直接调用与实参匹配的构造函数，拷贝初始化总是调用拷贝构造函数。拷贝初始化首先使用指定构造函数创建一个临时对象，然后用拷贝构造函数将那个临时对象拷贝到正在创建的对象。所以直接初始化也是可以用拷贝构造函数的，但是并不会创建临时对象（这个对象已经有了），他俩唯一的区别就是有没有创建临时对象：
+```
+class ClassTest  
+{  
+public:  
+    ClassTest(){  //默认构造函数
+        c[0] = '\0';  
+        cout<<"ClassTest()"<<endl;  
+    }  
+    ClassTest& operator=(const ClassTest &ct){  //运算符重载
+        strcpy(c, ct.c);  
+        cout<<"ClassTest& operator=(const ClassTest &ct)"<<endl;  
+        return *this;  
+    }  
+    ClassTest(const char *pc){  //构造函数
+        strcpy(c, pc);  
+        cout<<"ClassTest (const char *pc)"<<endl;  
+    }  
+// private:  
+    ClassTest(const ClassTest& ct)  {  //拷贝构造函数
+        strcpy(c, ct.c);  
+        cout<<"ClassTest(const ClassTest& ct)"<<endl;  
+    }  
+private:  
+    char c[256];  
+};  
+  
+int main(){  
+    cout<<"ct1: ";  
+    ClassTest ct1("ab");//直接初始化  
+    cout<<"ct2: ";  
+    ClassTest ct2 = "ab";//拷贝初始化  
+    cout<<"ct3: ";  
+    ClassTest ct3 = ct1;//拷贝初始化  
+    cout<<"ct4: ";  
+    ClassTest ct4(ct1);//直接初始化  
+    cout<<"ct5: ";  
+    ClassTest ct5 = ClassTest();//拷贝初始化  
+    return 0;  
+}  
+```
+以上的这几种初始化中：
+- ClassTest ct1("ab");这条语句属于直接初始化，它不需要调用拷贝构造函数，直接调用构造函数ClassTest(const char *pc)；
+- ClassTest ct2 = "ab";这条语句为拷贝初始化，它首先调用构造函数ClassTest(const char *pc)函数创建一个临时对象，然后调用拷贝构造函数，把这个临时对象作为参数，构造对象ct2；如果拷贝构造函数变为私有时，该语句不能编译通过；
+- ClassTest ct3 = ct1;这条语句为拷贝初始化，因为ct1本来已经存在，所以不需要调用相关的构造函数，而直接调用拷贝构造函数，把它值拷贝给对象ct3；所以当拷贝构造函数变为私有时，该语句不能编译通过；
+- ClassTest ct4（ct1）；这条语句为直接初始化，因为ct1本来已经存在，直接调用拷贝构造函数，生成对象ct3的副本对象ct4。所以假如拷贝构造函数变为私有时，该语句不能编译通过。
+
+注意这里也重载了赋值运算符，但是所有的拷贝初始化都没有去用它，因为拷贝构造函数是要构造一个还没有存在的对象，只有两个都存在的对象之间才会用赋值运算符：
+```
+ClassTest ct5;
+ct5=ct4;
+```
+只有这种时候才会用类中重载的赋值运算符。
+
+#### 隐式类类型转换
+&emsp;&emsp;一般来说，对于一个存在一个可以只接受一个参数的构造函数的类来说：
+```
+class ClxComplex
+{
+public:
+    ClxComplex(double dReal = 0.0, double dImage = 0.0){ //这里的构造函数因为两个参数都有初值，所以可以没有参数、只写一个参数或者两个参数都写，那种只能接受一个且没有初值的也算是这种情况。
+        m_dReal = dReal; dImage = dImage; 
+    }
+ 
+    double GetReal() const { return m_dReal; }
+    double GetImage() const { return m_dImage; }
+ 
+private:
+    double m_dReal;
+    double m_dImage;
+};
+```
+这种类在初始化的时候可以有这几种写法：
+```
+ClxComplex lxTest = 2.0;
+ClxComplex lxTest = ClxComplex(2.0);
+ClxComplex lxTest = ClxComplex(2.0, 0.0);
+
+ClxComplex lxTest(2.0, 0.0);
+```
+这里可以注意一下第一种，这种在上一节中也有类似的初始化方法，其实它的原理是做了一个隐式转换，将一个2.0的double类转化为了ClxComplex类然后再用拷贝初始化，具体转化的方法就是跟第二句一样，先建立一个临时的ClxComplex(2.0)类再用拷贝初始化。这种隐式转换只能像上面说的一样，在可以只需要一个参数的情况下使用，但是也不是每次都能转。同时这种隐式转换也是可以抑制的，因为有时候这种隐式转换会造成一定隐患。这时可以使用**显式构造函数**，即将构造函数声明成explicit即可防止隐式转换：
+```
+class ClxString
+{
+public:
+    explicit ClxString(int iLength);
+    ClxString(const char *pString);
+    ~ClxString();
+ 
+private:
+    char *m_pString;
+};
+```
+但是这种情况下只能使用直接初始化，使用拷贝初始化就会报错。
+
+&emsp;&emsp;不过如果一定需要有转换的话，可以使用强制转换static_cast来进行。
+
+### 聚合类
+&emsp;&emsp;假如一个类满足如下条件，我们可以称之为聚合类：
+- 所有成员都是public的（比如普通的结构体）
+- 没有定义构造函数
+- 没有类内初值
+- 没有基类或者虚函数
+
+### 字面值常量类
+&emsp;&emsp;数据成员都是字面值类型的聚合类是字面值常量类。如果一个类不是聚合类，但它符合下述要求，则它也是一个字面值常量类：
+- 数据成员必须是字面值类型
+- 类必须至少含有一个constexpr构造函数
+- 如果一个数据成员含有一个类内初始值，则内置类型成员的初始值必须是一条常量表达式，或者如果成员属于某种类类型，则初始值必须使用成员自己的constexpr构造函数
+- 类必须使用析构函数的默认定义，该成员负责销毁类的对象
+
+个人理解，这种字面值常量类主要就是用来存储一堆常量的，或者说就是把一堆常量放在一个类中存起来。所以这种类的构造函数一般就是有一个赋值的作用，一般就用参数列表就行：
+```
+class Debug{
+public:
+    constexpr Debug(bool b=true):hw(b),io(b),other(b){}
+    void set_io(bool b){io=b;}
+private:
+    bool hw;
+    bool io;
+    bool other;
+}
+```
+这种类的中心就是数据，所有的操作都是围绕类中存的数据展开的。constexpr的作用是告诉编译器构造函数是编译期间可知的，可以进行优化。
+
 ### 类的访问控制与封装
 &emsp;&emsp;在c++中用访问说明符来加强类的封装性
 - 定义在public之后的成员在整个程序中均可被访问。其中的成员也就是类的接口。
@@ -1210,3 +1336,32 @@ myScreen.display(cout).set('*');
 
 ### 类中的基于const的函数重载
 &emsp;&emsp;因为非常量版本的函数（比如上面的set）对于常量对象（myScreen.display(cout)的返回值）是不可用的，所以只能在一个常量对象上调用const成员函数。
+
+### 类的静态成员
+&emsp;&emsp;有些时候需要有一些成员与类本身直接相关，例如一个银行账户类需要有一个成员来表示利率，但是没有必要每个对象都存利率信息，只要每个对象都跟对象有关联就行，而且也希望在利率浮动的时候能让所有的对象都更新，这时就可以声明一个静态成员：
+```
+class CRect{
+public:
+	void show();//普通成员函数
+	static void printTotal();//静态成员函数
+private:
+	int width, height;//普通成员变量
+	static int totalNumber;//静态成员变量
+	static int totalArea;//静态成员变量
+
+};
+```
+静态成员是public和private都行。类的静态成员存在于每个对象之外，对象本身不包含静态成员，但是可以被每个对象共享。静态成员函数也一样，所以它并没有this指针，也不能定义成const。
+
+&emsp;&emsp;因为静态数据并不属于任何一个对象，所以它们不能在创建对象的时候就被定义，甚至不能被构造函数初始化，也不应该在类的内部初始化静态成员。所以必须在类的外部定义和初始化每个静态成员（但是类内还是得带着static声明一下，外面就不用带着static了），只能定义一次。
+
+&emsp;&emsp;不过也有例外，类的静态成员也可以在类内提供一个类内初值，但是要求是字面值常量类型：
+```
+class Account{
+public:
+    static double rate(){ return interestTate; }
+    static void rate(double);
+private:
+    static constexpr int period=30;
+}
+```
