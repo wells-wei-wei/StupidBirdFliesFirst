@@ -7,6 +7,8 @@
  * @FilePath: \StupidBirdFliesFirst\README.md
  -->
 # 笨鸟先飞——我的知识库
+本项目旨在总结个人学习中的所见所想，也适用于所有想要入门编程或算法的同学
+
 公式无法显示的可以尝试下载chrome插件[MathJax Plugin for Github](https://chrome.google.com/webstore/detail/mathjax-plugin-for-github/ioemnmodlmafdkllaclgeombjnmnbima/related)
 - [C++基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/C%2B%2BFundamental.md)
 - 机器学习基础知识
