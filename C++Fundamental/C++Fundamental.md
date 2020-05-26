@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-05-24 23:29:15
+ * @LastEditTime: 2020-05-26 19:23:16
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -1077,7 +1077,7 @@ private:
 这里就是将后面的构造函数全部交给了第一个构造函数，最后一个除了委托以外还执行了自己的内容，在执行完委托函数以后才会执行自己的内容。
 
 #### 拷贝初始化和直接初始化
-&emsp;&emsp;这主要是类初始化过程的不同：直接初始化直接调用与实参匹配的构造函数，拷贝初始化总是调用拷贝构造函数。拷贝初始化首先使用指定构造函数创建一个临时对象，然后用拷贝构造函数将那个临时对象拷贝到正在创建的对象。所以直接初始化也是可以用拷贝构造函数的，但是并不会创建临时对象（这个对象已经有了），他俩唯一的区别就是有没有创建临时对象：
+&emsp;&emsp;这主要是类初始化过程的不同：直接初始化直接调用与实参匹配的构造函数，拷贝初始化总是调用拷贝构造函数（后面会讲）。拷贝初始化首先使用指定构造函数创建一个临时对象，然后用拷贝构造函数将那个临时对象拷贝到正在创建的对象。所以直接初始化也是可以用拷贝构造函数的，但是并不会创建临时对象（这个对象已经有了），他俩唯一的区别就是有没有创建临时对象：
 ```
 class ClassTest  
 {  
@@ -1173,6 +1173,110 @@ private:
 但是这种情况下只能使用直接初始化，使用拷贝初始化就会报错。
 
 &emsp;&emsp;不过如果一定需要有转换的话，可以使用强制转换static_cast来进行。
+
+### 拷贝控制操作
+&emsp;&emsp;所谓拷贝控制操作指的就是每一个类型都必须显式或者隐式地决定在对此类型地对象拷贝、移动、赋值和销毁时应该做什么。其中**拷贝构造函数**和**移动构造函数**定义了当用用类型的对象初始化当前对象的时候应该干什么。**拷贝和移动赋值运算符**定义了将一个对象赋予同类型的另一个对象需要干什么。**析构函数**定义了此对象销毁时应该做什么。
+#### 拷贝构造函数
+&emsp;&emsp;如果一个构造函数的一个参数是自身类型的引用，且没有额外参数或者都有默认值，则为拷贝构造函数：
+```
+class CExample {
+private:
+    int a;
+public:
+    CExample(int b){ a=b;}
+    
+    CExample(const CExample& C){//拷贝构造函数
+        a=C.a;
+    }
+    void Show ()
+    {
+        cout<<a<<endl;
+    }
+};
+
+```
+这里一定要引用，因为不引用的话就会真的再创建一个对象，还要再调用拷贝构造函数，形成无限递归。
+#### 合成拷贝构造函数
+&emsp;&emsp;假如没有定义拷贝构造函数的话，那么编译器将自动定义一个合成拷贝构造函数。它跟合成的默认构造函数不一样，就算有其他自定义的构造函数编译器也会定义它，它的默认功能是将其参数的成员逐个拷贝到正在创建的对象中（非static）。至于每个成员类型怎么拷贝，取决于其自己的方式：内置类型直接拷贝，类类型会使用自己的拷贝构造函数，数组也会逐个元素拷贝。
+
+&emsp;&emsp;在程序中也可以显式地要求编译器自动合成拷贝构造函数，即使用=default：
+```
+class CExample {
+private:
+    int a;
+public:
+    CExample(int b){ a=b;}
+    
+    CExample(const CExample& C)=default;
+    void Show ()
+    {
+        cout<<a<<endl;
+    }
+};
+```
+不过这个时候就会自动成为内联函数，如果不想让它内联可以在类外使用=default
+
+#### 拷贝赋值运算符
+&emsp;&emsp;拷贝赋值运算符跟拷贝构造函数是有很大区别的。虽然在拷贝初始化中也有等于号，但是它本身的作用是新建一个对象，在这种目的下会调用构造函数，所以等于号这个运算符并不是等于的意思，而是在调用构造函数；而拷贝赋值运算符则是在类中重载运算符，在已经创建完成的两个对象之间进行赋值的操作：
+```
+Person p; //已经创建好了一个对象
+Person p1 = p;    //  这里仅进行赋值操作，调用的是拷贝赋值运算符
+```
+重载运算符本质上是函数，由operator后接表示要定义的运算符：
+```
+class Person{
+public:
+    Person() {}
+    Person( const Person& p ){
+        cout << "Copy Constructor" << endl;
+    }
+
+    Person& operator=( const Person& p ){ //重载运算符
+        cout << "Assign" << endl;
+        return *this;
+    }
+private:
+    int age;
+    string name;
+};
+```
+#### 合成拷贝赋值运算符
+&emsp;&emsp;如果一个类没有定义复制拷贝运算符的话编译器会为它生成合成拷贝赋值运算符，作用是将右侧的对象的每个非static成员赋值给左侧，数组也会逐个赋值
+
+#### 析构函数
+&emsp;&emsp;析构函数释放对象所用的所有资源，并销毁对象的非static成员。它是类的一个成员函数，由波浪号接类名构成，没有返回值且不接受参数：
+```
+class String{
+private:
+    char* p;
+public:
+    String(int n);
+    ~String();
+};
+
+String::~String(){
+    delete[] p;
+}
+String::String(int n){
+    p = new char[n];
+}
+```
+析构函数中首先执行函数体，然后按照初始化的逆序销毁成员，销毁成员这一部分是隐式执行的。
+
+&emsp;&emsp;析构函数主要在以下情况中自动调用：
+- 变量离开作用域（函数结束，对象结束）
+- 对象被销毁，它的成员也会被销毁
+- 容器被销毁，元素也会被销毁
+- 动态分配的对象，对指向它的指针使用delete时（也就是说如果对指针不用delete，仅仅是离开作用域的话析构函数是不会执行的）
+- 临时对象，表达式结束时
+
+#### 合成析构函数
+&emsp;&emsp;如果一个类没有定义析构函数那么编译器也会自动定义一个（劳模编译器）。注意析构函数的函数体本身是不执行销毁成员的任务的，销毁的任务是函数体执行之后的隐式析构阶段执行的。
+
+#### 定义的规则
+&emsp;&emsp;一般来数，当一个类需要定义析构函数的时候，就也需要定义拷贝和赋值操作。主要原因就是指针。在析构函数中需要对指针delete，那么在拷贝的时候，如果直接使用合成的话，那么就是直接复制指针，就会造成两个指针指向同一个地址，这时非常非常危险的，所以拷贝和赋值此时也需要自己定义。
+
+&emsp;&emsp;需要拷贝的时候一般也需要定义赋值，反之亦然。
 
 ### 聚合类
 &emsp;&emsp;假如一个类满足如下条件，我们可以称之为聚合类：
@@ -1364,4 +1468,57 @@ public:
 private:
     static constexpr int period=30;
 }
+```
+
+## 智能指针
+&emsp;&emsp;智能指针主要的作用就是方便程序员管理内存，可以自动进行指针的释放，包含在头文件memory中，shared_ptr、unique_ptr、weak_ptr。
+
+### shared_ptr
+&emsp;&emsp;shared_ptr可以有多个指针指向相同的对象：
+```
+#include <iostream>
+#include <memory>
+
+int main() {
+    {
+        int a = 10;
+        std::shared_ptr<int> ptra = std::make_shared<int>(a);//初始化，使用make_shared函数
+        std::shared_ptr<int> ptra2(ptra); //copy
+        std::cout << ptra.use_count() << std::endl;
+
+        int b = 20;
+        int *pb = &a;
+        //std::shared_ptr<int> ptrb = pb;  //error
+        std::shared_ptr<int> ptrb = std::make_shared<int>(b);
+        ptra2 = ptrb; //assign
+        pb = ptrb.get(); //获取原始指针
+
+        std::cout << ptra.use_count() << std::endl;
+        std::cout << ptrb.use_count() << std::endl;
+    }
+}
+```
+- 初始化过程中，智能指针是个模板类，可以指定类型，传入指针通过构造函数初始化。也可以使用make_shared函数初始化。不能将指针直接赋值给一个智能指针，一个是类，一个是指针。例如std::shared_ptr\<int\> p4 = new int(1);的写法是错误的。
+- 拷贝使得对象的引用计数增加1，赋值使得原对象引用计数减1，当计数为0时，自动释放内存。后来指向的对象引用计数加1，指向后来的对象。
+- get函数获取原始指针
+- 注意不要用一个原始指针初始化多个shared_ptr，否则会造成二次释放同一内存
+- 注意避免循环引用，shared_ptr的一个最大的陷阱是循环引用，循环，循环引用会导致堆内存无法正确释放，导致内存泄漏。循环引用在weak_ptr中介绍。
+  
+### unique_ptr
+&emsp;&emsp;unique_ptr“唯一”拥有其所指对象，同一时刻只能有一个unique_ptr指向给定对象（通过禁止拷贝语义、只有移动语义来实现）。unique_ptr指针本身的生命周期是从unique_ptr指针创建时开始，直到离开作用域。离开作用域时，若其指向对象，则将其所指对象销毁(默认使用delete操作符，用户可指定其他操作)。unique_ptr指针与其所指对象的关系是在智能指针生命周期内，可以改变智能指针所指对象，如创建智能指针时通过构造函数指定、通过reset方法重新指定、通过release方法释放所有权、通过移动语义转移所有权。
+```
+#include <iostream>
+#include <memory>
+
+int main() {
+    {
+        std::unique_ptr<int> uptr(new int(10));  //绑定动态对象
+        //std::unique_ptr<int> uptr2 = uptr;  //不能賦值
+        //std::unique_ptr<int> uptr2(uptr);  //不能拷貝
+        std::unique_ptr<int> uptr2 = std::move(uptr); //轉換所有權
+        uptr2.release(); //释放所有权
+    }
+    //超過uptr的作用域，內存釋放
+}
+
 ```
