@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-05-28 21:04:01
+ * @LastEditTime: 2020-05-29 19:21:37
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -1537,7 +1537,7 @@ void Base1::display() const {
     cout << "Base1::display()" << endl;
 }
  
-class Base2::public Base1 { 
+class Base2:public Base1 { 
 public:
      void display() const;
 };
@@ -1545,10 +1545,40 @@ void Base2::display() const {
     cout << "Base2::display()" << endl;
 }
 ```
-另外很多时候最需要的是虚析构函数。
+虚函数在修改原函数的时候也可以修改特征标。另外很多时候最需要的是虚析构函数。
+
+![继承](inherit.jpg)
+
+##### 访问控制
+&emsp;&emsp;公有继承中除了public和private可以对成员的访问做一定的控制以外，还可以使用protected。private和protected在类外访问的时候效果相同，只有在派生类中才有区别。派生类的成员可以直接访问基类的protected成员，但是不能直接访问private成员。
+
+##### 抽象基类（纯虚函数）
+&emsp;&emsp;纯虚函数就是在基类中做如下声明：
+```
+class CShape{
+public:
+    virtual void Show()=0;
+};
+```
+此时这个Show函数就是纯虚函数，纯虚函数的存在使得它的类只能用于基类（即抽象基类），不能为它创建对象，这种类存在的意义就是被继承，并在派生类中真正地定义这个纯虚函数。它的存在主要是为了解决一些定义上的麻烦，因为有些基类本身生成对象是不合情理的。例如，动物作为一个基类可以派生出老虎、孔雀等子类，但动物本身生成对象明显不合常理。
+
+&emsp;&emsp;需要注意的是，纯虚函数在子类中重写的时候不允许修改任何特征标，必须跟父类的纯虚函数声明完全一样。这点跟虚函数是很不一样的。这一点从工程上来说就是在基类中设计了一个接口，派生类中的所有函数必须符合这个接口规则。
+
+##### 重载、重定义和重写
+- 重载：函数名相同，函数的参数个数、参数类型或参数顺序三者中必须至少有一种不同。函数返回值的类型可以相同，也可以不相同。发生在一个类内部。
+- 重定义：也叫做隐藏，子类重新定义父类中有相同名称的非虚函数 ( 参数列表可以不同 ) ，指派生类的函数屏蔽了与其同名的基类函数。可以理解成发生在继承中的重载。
+- 重写：也叫做覆盖，一般发生在子类和父类继承关系之间。子类重新定义父类中有相同名称和参数的虚函数。(override)
 
 #### 私有继承
+&emsp;&emsp;私有继承就是把公有继承的public变为private。私有继承中基类的公有成员和保护成员都将成为派生类的私有成员。也就是说基类不会再成为派生类对象公共接口的一部分。但还是能在派生类的成员函数中使用他们（获得实现不获得接口）。
+
 #### 保护继承
+&emsp;&emsp;保护继承就是把公有继承的public变为protected。保护继承的积累的公有成员和保护成员都将变为派生类的保护成员。这时跟私有继承大致相同，但是由派生类再生出另一个派生类时就不一样了。
+
+![各种继承方式](publicprivateprotected.jpg)
+
+#### 多重继承
+&emsp;&emsp;多重继承就是一个派生类继承了多个基类。
 
 ## 智能指针
 &emsp;&emsp;智能指针主要的作用就是方便程序员管理内存，可以自动进行指针的释放，包含在头文件memory中，shared_ptr、unique_ptr、weak_ptr。
