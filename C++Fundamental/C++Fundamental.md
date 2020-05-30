@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-05-29 19:21:37
+ * @LastEditTime: 2020-05-30 20:42:30
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -1579,6 +1579,351 @@ public:
 
 #### 多重继承
 &emsp;&emsp;多重继承就是一个派生类继承了多个基类。
+```
+class B1{
+public:
+    B1(){cout<<"B1\n";}
+};
+class B2{
+public:
+    B2(){cout<<"B2\n";}
+};
+class C:public B2,public B1{    //:之后称为类派生表，表的顺序决定基类构造函数调用的顺序，析构函数的调用顺序正好相反
+};
+int main()
+{
+    C c;
+    return 0;
+}
+```
+这种继承中一般会产生一些问题，首先可能会有大量的二义性，多个基类中可能包含同名变量或函数，这时只能在派生类中使用作用域解析符（::）来指定：
+```
+class Bed
+{
+public:
+    Bed(int weight) : weight_(weight)
+    {
+ 
+    }
+    void Sleep()
+    {
+        cout << "Sleep ..." << endl;
+    }
+    int weight_;
+};
+ 
+class Sofa
+{
+public:
+    Sofa(int weight) : weight_(weight)
+    {
+ 
+    }
+    void WatchTV()
+    {
+        cout << "Watch TV ..." << endl;
+    }
+    int weight_;
+};
+ 
+class SofaBed : public Bed, public Sofa
+{
+public:
+    SofaBed() : Bed(0), Sofa(0)
+    {
+        FoldIn();
+    }
+    void FoldOut()
+    {
+        cout << "FoldOut ..." << endl;
+    }
+    void FoldIn()
+    {
+        cout << "FoldIn ..." << endl;
+    }
+};
+ 
+int main(void)
+{
+    SofaBed sofaBed;
+    //sofaBed.weight_ = 10; error
+    //sofaBed.weight_ = 20; error
+ 
+    sofaBed.Bed::weight_ = 10;
+    sofaBed.Sofa::weight_ = 20;
+ 
+    sofaBed.WatchTV();
+    sofaBed.FoldOut();
+    sofaBed.Sleep();
+ 
+    return 0;
+}
+```
+
+##### 虚基类
+&emsp;&emsp;当派生类从多个基类派生，而这些基类又从同一个基类派生，则在访问此共同基类中的成员时，将产生二义性（就像上面的Bed和Sofa，假设这两个类其实都是由一个Furniture类派生的，那么必然就包含同样的成员weight_（虽然实际上上面两个类并不是由一个类派生，只是恰好有一个一样的成员而已）），这时可以采用虚基类来解决，为最远的派生类提供唯一的基类成员，而不重复产生多次拷贝：
+```
+class CBase { }；//虚基类 间接基类
+
+class ChildA1：virtual public CBase{ };//直接基类 虚继承
+
+class ChildA2：virtual public CBase{ };//直接基类 虚继承
+
+class ChildB：public ChildA1，ChildA2{ };
+
+```
+这时在类ChildB的对象中，仅有类CBase的一个对象数据。注意，假如在B初始化时需要输入参数给A1和A2，这是一个参数传递的过程，一般如果是“链式”的继承的话会把这个参数通过构造函数一个一个传递到最初的基类那里，但是这种多重继承的情况下，这种传递路径就有两条，最终都能到最初的虚基类（CBase）中，这会造成冲突，所以A1和A2会禁止传递参数，直接使用CBase的默认构造函数。
+
+这时假如不想让CBase直接使用默认构造函数，就只能显示地指定虚基类的构造函数，且必须在两个直接基类之前：
+```
+ChildB(int a):CBase(a), A1(a),A2(a){};
+```
+这种情况只有虚继承中才有。
+
+### 类模板
+&emsp;&emsp;STL中的vector、queue等容器都是应用类模板生成出来的：
+```
+template<class T>
+class Test
+{
+private:
+    T n;
+    const T i;
+public:
+    Test():i(0) {}
+    Test(T k);
+    ~Test(){}
+
+    void print();
+    T operator+(T x);
+};
+```
+如果在类外定义成员函数，若此成员函数中有模板参数存在，则除了需要和一般类的类外定义成员函数一样的定义外，还需要在函数外进行模板声明:
+```
+template<class T>
+void Test<T>::print()
+{
+    std::cout<<"n="<<n<<std::endl;
+    std::cout<<"i="<<i<<std::endl;
+}
+
+template<class T>
+Test<T>::Test(T k):i(k){ n=k;}
+
+template<class T>
+T Test<T>::operator+(T x){
+    return n + x;
+}
+```
+使用类模板的固定格式为：类名<实际的类型>。模板类是类模板实例化后的一个产物。
+
+#### 类模板的继承
+```
+template <class T>
+class SearchArray:public FreeArray<T>
+{
+public:
+    //构造函数
+    SearchArray(int s):FreeArray<T>(s){}
+    //拷贝构造函数
+    SearchArray(const SearchArray &);
+    //查找特定元素
+    int findItem(T);
+};
+ 
+template <class T>
+SearchArray<T>::SearchArray(const SearchArray &obj)
+{
+    for(int n=0;n<this->sizeArray();n++)
+        this->operator[](n) = obj[n];
+}
+ 
+template <class T>
+int SearchArray<T>::findItem(T item)
+{
+    for(int n=0;n<=this->sizeArray();n++)
+    {
+        if(this->operator[](n) == item)
+            return n;
+    }
+    return -1;
+}
+```
+
+#### 类模板的递归使用
+```
+Array<Array<int>> t;
+```
+
+#### 使用多个参数
+```
+template <class T1, class T2>
+class Pair{
+    ......
+}
+```
+
+#### 默认模板类型参数
+```
+template <class T1, class T2=int>
+class Pair{
+    ......
+}
+```
+这时可以在定义一个模板类对象时只指定第一个类型。
+
+#### 模板的具体化
+&emsp;&emsp;类模板和函数模板相似，可以有隐式实例化，显式实例化和显式具体化，他们统称为具体化
+
+##### 隐式实例化
+&emsp;&emsp;直接定义一个模板类对象就是使用隐式实例化。在定义时指出类型，然后由编译器自动生成具体的类定义
+
+##### 显示实例化
+&emsp;&emsp;在定义之前使用template关键字并指出所需要类型来声明类即为显示实例化：
+```
+template class A<int>;
+```
+注意这个时候还没有生成类对象。
+
+##### 显式具体化
+&emsp;&emsp;就是为特殊的类型进行实例化，对模板进行修改，实其行为不同：
+```
+template <> class A<char>{
+    ......
+};
+```
+这就是专门为char类型具体化的模板类写法。
+
+##### 部分具体化
+&emsp;&emsp;假如一个类模板中有两个模板类型，可以只为其中一个做具体化：
+```
+template <class T1> class A<T1,int>{
+    ......
+};
+```
+这就是只为第二个类型做了具体化，T1没有，所以前面的尖括号中还是要写class T1。
+
+#### 类模板作为参数及类模板的友元
+```
+#include <iostream>
+#include <string>
+
+// 类模版
+template <typename T>
+class man
+{
+public:
+    man(T t): name(t)
+    {
+
+    }
+
+    void printName()
+    {
+        std::cout << name << std::endl;
+    }
+
+    // 类模版的友元函数声明
+    template <typename Q>
+    friend void fprintMan(man<Q> & m);
+
+    // 类模版的友元类声明
+    template <typename Q>
+    friend class printClass;
+
+private:
+    T name;
+};
+
+// 类模版的友元函数定义
+template <typename Q>
+void fprintMan(man<Q> & m) // 注意: 模板类必须实例化 内部实例化 man<Q>
+{
+    m.printName();
+}
+
+// 类模版的友元类定义
+template <typename Q>
+class printClass
+{
+public:
+    void print(man<Q> & my) // 注意: 模板类必须实例化 内部实例化 man<Q>
+    {
+        my.printName();
+    }
+};
+
+// 类模版作为函数参数
+template <typename T>
+void printMan(man<T> & m) // 注意: 模板类必须实例化 内部实例化 man<T>
+{
+    m.printName();
+}
+
+// 类模版作为模版参数
+template <typename T1, template <typename T> class T2>
+class people
+{
+public:
+    void printPeople(T2<T1> t1) // 注意: 模板类必须实例化 内部实例化 T2<T1>
+    {
+        t1.printName();
+    }
+};
+
+// 函数模版
+template <typename T>
+T addTemplate(T x, T y)
+{
+    return (x + y);
+}
+
+// 函数模版作为函数的参数
+template <typename T>
+void printAdd(T (*p)(T, T), T x, T y) // 注意: 模版函数的指针必须实例化 外部实例化
+{
+    std::cout << (*p)(x, y) << std::endl;
+}
+
+// 函数模版作为类的参数
+template <typename T>
+class addclass
+{
+public:
+    void printAddFun(T (*p)(T, T), T x, T y) // 注意: 模版函数的指针必须实例化 外部实例化
+    {
+        std::cout << (*p)(x, y) << std::endl;
+    }
+};
+
+
+int main()
+{
+    man<std::string> man1("hello"); // 类模版实例化对象
+    man1.printName();
+
+    fprintMan(man1); // 类模版的友元函数
+
+    printClass<std::string> print1; // 类模版的友元类
+    print1.print(man1);
+
+    printMan(man1); // 类模版作为函数参数
+
+    people<std::string, man> people1;
+    people1.printPeople(man1); // 类模版作为模版参数
+
+    std::cout << addTemplate(3, 4) << std::endl;  // 函数模版实例化
+    std::cout << addTemplate(7.7, 9.5) << std::endl;
+
+    printAdd<int>(addTemplate, 10, 54); // 函数模版必须实例化
+
+    addclass<int> addclass1;
+    addclass1.printAddFun(addTemplate, 10, 54);  // 函数模版作为类的参数
+
+    system("pause");
+    return 0;
+}
+```
 
 ## 智能指针
 &emsp;&emsp;智能指针主要的作用就是方便程序员管理内存，可以自动进行指针的释放，包含在头文件memory中，shared_ptr、unique_ptr、weak_ptr。
