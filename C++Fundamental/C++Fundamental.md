@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-05-31 22:40:35
+ * @LastEditTime: 2020-06-01 23:16:02
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -1001,6 +1001,8 @@ private:
 };
 ```
 这里指的意思是声明为常量成员函数，表明其不被允许修改类的数据成员。这个const实际上是作用在this上的。
+
+&emsp;&emsp;一般来说尽量要使用const。
 
 ### 类的成员函数和变量之间的顺序关系
 &emsp;&emsp;即使声明在成员函数之后的变量也是可以被成员函数使用的。因为会首先编译所有成员的声明然后才是函数体。
