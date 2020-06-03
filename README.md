@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-02 20:24:38
+ * @LastEditTime: 2020-06-03 00:03:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -16,9 +16,10 @@
   - [关系型数据库和非关系型数据库](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQLAndNoSQL.md)
   - [Redis](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/Redis.md)
 - 机器学习基础知识
+  - [感知机](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/Perceptron.pdf)
+  - [多层感知机（反向传播）](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/BP.pdf)
   - [激活函数](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/ActivationFunction/ActivationFunction.md)
   - [梯度下降](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/GD.pdf)
-  - [感知机](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/Perceptron.pdf)
   - [U-net](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/U-net/U-net.md)
 - 各种命令行命令
   - [git](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/git.md)
