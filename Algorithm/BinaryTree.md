@@ -80,9 +80,10 @@ void preOrderTraverse1(TreeNode* root) {
 }
 ```
 ```
-void posOrder1(TreeNode* root){
-    if(TreeNode==NULL) return;
-    std::stack<TreeNode*> nstack1, nstack2;
+vector<int> postorderTraversal(TreeNode* root) {
+    vector<int> res;
+    if(root==NULL) return res;
+    stack<TreeNode*> nstack1, nstack2;
     nstack1.push(root);
     while(!nstack1.empty()){
         TreeNode *temp=nstack1.top();
@@ -93,9 +94,10 @@ void posOrder1(TreeNode* root){
     }
     while(!nstack2.empty())
     {
-        std::cout<<nstack2.top()->value;
+        res.push_back(nstack2.top()->val);
         nstack2.pop();
     }
+    return res;
 }
 ```
 

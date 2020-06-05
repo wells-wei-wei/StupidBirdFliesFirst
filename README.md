@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-03 00:03:55
+ * @LastEditTime: 2020-06-05 20:46:25
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -11,6 +11,8 @@
 
 公式无法显示的可以尝试下载chrome插件[MathJax Plugin for Github](https://chrome.google.com/webstore/detail/mathjax-plugin-for-github/ioemnmodlmafdkllaclgeombjnmnbima/related)
 - [C++基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/C%2B%2BFundamental.md)
+- 算法
+  - [二叉树](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/BinaryTree.md)
 - 数据库
   - [MySQL](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/MySQL.md)
   - [关系型数据库和非关系型数据库](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQLAndNoSQL.md)
