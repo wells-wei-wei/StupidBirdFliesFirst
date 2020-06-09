@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-02 18:57:30
- * @LastEditTime: 2020-06-08 20:52:12
+ * @LastEditTime: 2020-06-09 21:56:18
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataBase\MySQL.md
@@ -434,4 +434,35 @@ FROM wells
 |3         |9.99        |29.97  |
 +-------------------------------+
 ```
-可以看出同时显示出了两列相乘的结果
+可以看出同时显示出了两列相乘的结果。
+
+### 使用数据处理函数
+&emsp;&emsp;sql中预先定义好了一些用来处理值的函数
+#### 文本处理函数
+&emsp;&emsp;Upper()函数：
+```
+SELECT Upper(name) AS uname
+FROM wells
+```
+作用是将字符全部变成大写。
+
+还有其他的文本处理函数，这里不作一一介绍，用法与Upper相同：
+![](wenbenchuli.jpg)
+SOUNDEX需要做进一步的解释。SOUNDEX是一个将任何文本串转换为描述其语音表示的字母数字模式的算法。SOUNDEX考虑了类似的发音字符和音节，使得能对串进行发音比较而不是字母比较。
+
+#### 日期和时间处理函数
+&emsp;&emsp;首先，MySQL的数据库中采用不同的数据类型存储日期或者时间：
+|  数据类型   | 存储格式  |
+|  ----  | ----  |
+| DATA  | yyyy-mm-dd |
+| TIME  | HH:MM:SS |
+| DATETIME  | YYYY-MM-DD HH:MM:SS |
+日期和时间的处理函数可以用来处理这些数据：
+![](shijianchuli.jpg)
+例如想要查2005年9月的所有数据，可以这样写：
+```
+SELECT id, num
+FROM wells
+WHERE Date(date) BETWEEN '2005-09-01' AND '2005-09-30'
+```
+其中的BETWEEN操作符可以把后面的两个日期定义为一个要匹配的范围
