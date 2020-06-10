@@ -1,12 +1,14 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-02 18:57:30
- * @LastEditTime: 2020-06-09 21:56:18
+ * @LastEditTime: 2020-06-10 22:09:17
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataBase\MySQL.md
 --> 
 # MySQL
+参考书目：
+- 《MySQL必知必会》
 
 ## 数据库基础
 &emsp;&emsp;数据库是一种以某种有组织的方式存储的数据集合。再简单一点，保存有组织的数据的容器
@@ -466,3 +468,117 @@ FROM wells
 WHERE Date(date) BETWEEN '2005-09-01' AND '2005-09-30'
 ```
 其中的BETWEEN操作符可以把后面的两个日期定义为一个要匹配的范围
+
+#### 数值处理函数
+&emsp;&emsp;数值处理函数仅处理数值数据。这些函数一般主要用于代数、三角或几何运算，因此没有串或日期—时间处理函数的使用那么频繁。
+![](shuzhichuli.jpg)
+
+### 汇总数据
+#### 聚集函数
+&emsp;&emsp;我们经常需要汇总数据而不用把它们实际检索出来，为此MySQL提供了专门的函数。使用这些函数，MySQL查询可用于检索数据，以便分析和报表生成。这种类型的检索例子有以下几种。
+-  确定表中行数（或者满足某个条件或包含某个特定值的行数）
+-  获得表中行组的和
+-  找出表列（或所有行或某些特定的行）的最大值、最小值和平均值。
+
+上述例子都需要对表中数据（而不是实际数据本身）汇总。为方便这种类型的检索，MySQL给出了5个聚集函数，见表12-1。这些函数能进行上述罗列的检索。
+![](jujihanshu.jpg)
+##### 平均值
+例如求某列的平均值：
+```
+SELECT AVG(price) AS avg_price
+FROM wells
+WHERE id=1
+```
+这就是返回所有id为1的行的价格的平均值
+
+##### 计数
+COUNT()函数进行计数。有两种使用方式：
+- 使用COUNT(*)对表中行的数目进行计数，不管列中包含的是空值还是非空值
+- 使用COUNT(column)对特定列中具有值的行进行计数
+
+#### 据集不同值
+&emsp;&emsp;MySQL5之后的版本中，使用DISTINCT可以在函数计算的时候只考虑不同的值：
+```
+SELECT AVG(DISTINCT price) AS avg_price
+FROM wells
+WHERE id=1
+```
+
+#### 组合聚集函数
+&emsp;&emsp;可以根据需要包含多个聚集函数：
+```
+SELECT AVG(DISTINCT price) AS avg_price,
+       MAX(price) AS max_price
+FROM wells 
+WHERE id=1
+```
+
+### 分组数据
+#### 数据分组
+&emsp;&emsp;以上的聚合可以进行一些统计功能，但是只能返回某一列或者某几列的统计数据。假如现在想要这种统计：每一种不同的id分别都有多少行，如果需要这种数据，可以这么写：
+```
+SELECT id, COUNT(*) AS nums
+FROM wells
+GROUP BY id
+```
+GROUP BY子句指示MySQL按id排序并分组数据，id相同的就是一组。这使得对每个id进行统计而不是对整个表计算一次。
+
+GROUP BY的一些规定：
+- GROUP BY子句可以包含任意数目的列。这使得能对分组进行嵌套，为数据分组提供更细致的控制。
+- 如果在GROUP BY子句中嵌套了分组，数据将在最后规定的分组上进行汇总。换句话说，在建立分组时，指定的所有列都一起计算（所以不能从个别的列取回数据）。
+- GROUP BY子句中列出的每个列都必须是检索列或有效的表达式（但不能是聚集函数）。如果在SELECT中使用表达式，则必须在GROUP BY子句中指定相同的表达式。不能使用别名。
+- 除聚集计算语句外，SELECT语句中的每个列都必须在GROUP BY子句中给出。
+- 如果分组列中具有NULL值，则NULL将作为一个分组返回。如果列中有多行NULL值，它们将分为一组。
+- GROUP BY子句必须出现在WHERE子句之后，ORDER BY子句之前。
+
+#### 过滤分组
+&emsp;&emsp;除了能用GROUP BY分组数据外，MySQL还允许过滤分组，规定包括哪些分组，排除哪些分组。这里使用HAVING语句：
+```
+SELECT id, COUNT(*) AS nums
+FROM wells
+GROUP BY id
+HAVING COUNT(*)>=2
+```
+这时将会只返回总行数大于等于2的分组。
+
+这里的HAVING和WHERE是有去别的，HAVING作用于不同的组，而WHERE作用于行。
+
+#### SELECT子句的顺序
+&emsp;&emsp;SELECT所有的子句顺序遵循如下规定：
+![](shunxu.jpg)
+
+### 联结表
+#### 关系表
+&emsp;&emsp;所谓关系表是一种数据存储的方法，例如商铺的发货单，这类数据库中肯定会记载每次发货的商品、时间、收件人等信息，但是每种商品又肯定有很多信息很多属性需要存储，因此应该建立两种表来存储信息，且这两张表是有关系的，所以称之为关系表。
+
+其中的商品表的主键可以存储在发货表中的一列，称之为发货表的外键，这个外键是构建两张表关系的桥梁。
+
+#### 联结
+&emsp;&emsp;因为多种数据存储在不同的表中，为了使用单条SELECT语句都能给检索出来，所以要用联结来进行检索。所谓联结就是多个表返回一组输出
+
+#### 创建联结
+```
+SELECT name,  price
+FROM wells, jake
+WHERE wells.id=jake.id
+```
+这里的name和price分别来自wells和jake两张表中（如果重名的话就要用全名称写），WHERE中指定了两张表中的id这一列建立联结，这样一来返回的就是同一表，且wells中的name和jake中的price都是通过id一一对应的。
+
+此外还可以这么写：
+```
+SELECT name,  price
+FROM wells INNER JOIN jake
+  ON wells.id=jake.id
+```
+这里的ON也是FROM的一部分。FROM中的语句表示两个表有联结，ON后面表示这个联结的具体条件。
+
+#### 联结多个表
+理论上可以联结的数量没有限制，可以写很多：
+```
+SELECT name,  price, gender
+FROM wells, jake, tom
+WHERE wells.id=jake.id
+  AND jake.school=gender.school
+```
+
+#### 自联结
