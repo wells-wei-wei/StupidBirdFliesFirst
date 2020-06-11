@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-02 18:57:30
- * @LastEditTime: 2020-06-10 22:09:17
+ * @LastEditTime: 2020-06-11 22:23:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataBase\MySQL.md
@@ -582,3 +582,38 @@ WHERE wells.id=jake.id
 ```
 
 #### 自联结
+例如这种情况：你发现某物品（id为DTNTR）存在问题，想知道它的供应商，以及其生产的其他物品是否也存在问题。因此优先需要查到id为DTNTR的物品的所有供应商，再查这些供应商供应的所有物品，可以直接这样写：
+```
+SELECT prod_id, prod_name
+FROM wells
+WHERE vend_id=(SELECT vend_id
+             FROM wells
+             WHERE prod_id='DTNTR')
+```
+这种方法称为子查询方法，用内部生成的检索结果来确定外部检索的条件。
+
+也可以使用联结查询：
+```
+SELECT p1.prod_id, p1.prod_name
+FROM wells AS p1, wells AS p2
+WHERE p1.vend_id=p2.vend_idwells
+  AND p2.prod_id='DTNTR'
+```
+这种情况被称之为自联结，因为此查询中需要的两个表实际上是相同的表。因此wells表在FROM子句中出现了两次。虽然这是完全合法的，但对wells的引用具有二义性，因为MySQL不知道你引用的是wells表中的哪个实例。为解决此问题，使用了表别名。wells的第一次出现为别名p1，第二次出现为别名p2。现在可以将这些别名用作表名。例如，SELECT语句使用p1前缀明确地给出所需列的全名。如果不这样，MySQL将返回错误，因为分别存在两个名为prod_id、prod_name的列。MySQL不知道想要的是哪一个列（即使它们事实上是同一个列）。WHERE（通过匹配p1中的vend_id和p2中的vend_id）首先联结两个表，然后按第二个表中的prod_id过滤数据，返回所需的数据。
+
+#### 外部联结
+上面使用INNER JOIN的被称为内部联结，它可以匹配所有的关联项，但是像那些没有关联项的是不会返回的，如果想返回非关联项，可以使用外部联结：
+```
+SELECT name,  price
+FROM wells LEFT OUTER JOIN jake
+  ON wells.id=jake.id
+```
+OUTER JOIN表示外部联结，但是前面还需有LEFT或者RIGHT指定包括所有行的表，例如这里写的是LEFT，就是说wells.id的表无论有没有关联项都会显示出来，而在jake.id中与之对应的会显示NULL。
+
+### 组合查询
+UNION 基本和WHERE的功能一样
+
+### 全文本搜索
+在索引之后，SELECT可与Match()和Against()一起使用以实际执行搜索。
+
+### 插入数据
