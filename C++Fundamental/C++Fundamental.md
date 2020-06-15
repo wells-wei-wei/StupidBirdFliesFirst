@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-06-01 23:16:02
+ * @LastEditTime: 2020-06-15 21:40:53
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -98,9 +98,15 @@ const int Months=12
 ```
 注意最好不要先声明一个const变量，然后再定义，这样常量值一开始就不确定，也无法修改，最好就跟上面的一样，声明定义一起来。
 
-&emsp;&emsp;const相比#define好在可以指定类型，同时可以使用c++的作用域规则将定义限制在特定区域中，而且还能将const用于结构体等更复杂的类型。
+&emsp;&emsp;const相比#define好在可以指定类型从而编译器可以进行安全检查，同时可以使用c++的作用域规则将定义限制在特定区域中，而且还能将const用于结构体等更复杂的类型。
 
 &emsp;&emsp;一般来说，使用const来代替#define是一种比较好的习惯。因为能够在作用域中定义，且能够获得这个变量的指针，这都是#define不能做到的。如果不想让其他人获得这个常量的指针，也可以用enum代替#define（见枚举部分）。
+
+&emsp;&emsp;const定义的变量只有类型为整数或枚举，且以常量表达式初始化时才能作为常量表达式。其他情况下它只是一个const限定的变量，不要将与常量混淆。
+
+&emsp;&emsp;const的优势在于防止修改，起保护作用，增加程序健壮性，这一点在作为函数参数传入时非常常用。另外可以节省空间，避免不必要的内存分配：
+- const定义常量从汇编的角度来看，只是给出了对应的内存地址，而不是像#define一样给出的是立即数。
+- const定义的常量在程序运行过程中只有一份拷贝，而#define定义的常量在内存中有若干个拷贝。
 
 ## 浮点数
 &emsp;&emsp;浮点数之所以叫浮点数是因为计算机将其分为两部分存储，一部分时基准值（0到1）和缩放因子，基准值根据缩放因子移动小数点的位置，所以叫浮点数。
@@ -530,6 +536,7 @@ double avg(const int arrays[],int sizes)
 ```
 int age=20;
 const int * pt=&age;
+int const * pt=&age;//与上面等价
 ```
 这个程序意味着pt是一个const int，也就说程序不能通过指针来修改这个age值，但是仅仅是不能用指针pt修改而已，程序还是可以用age来修改自己的值，另外这个指针pt虽然不能修改所指向的值，但是还是可以指向别的地址。
 
@@ -547,7 +554,7 @@ int sloth=3;
 const int * ps=&sloth;
 int * const f=&sloth;
 ```
-这种把const写在int*后面的表示f只能指向sloth的地址，但是允许修改数值，跟前面的相反，甚至可以写成这样：
+这种把const写在int*后面的表示f只能指向sloth的地址，但是允许修改数值，跟前面的相反，这种类型称为常指针。常指针必须有初始化。甚至可以写成这样：
 ```
 const double * const s=&age;
 ```
@@ -642,6 +649,16 @@ int& mouse=rat;
 int cat=9;
 mouse=cat;//这时并不会让mouse变成cat的别名，他们依然指向不同的位置，mouse和rat仍然指向同一位置，这种做法只会同时把cat的值赋给rat和mouse
 ```
+&emsp;&emsp;引用变量经常使用在函数参数中，例如针对部分使用const指针的情况，以下这种写法是没啥意义的：
+```
+void func(const int var); // 传递过来的参数不可变
+void func(int *const var); // 指针本身不可变
+```
+因为只要不是引用传递它本身也不能变，所以加个const没意义。但是加入const就不一样了：
+```
+void StringCopy(char *dst, const char *src);
+```
+这里我们知道const写在char*前表示这个指针不能用来改变值，这也就发挥了const的使命。
 
 &emsp;&emsp;将引用用在函数参数中时就不会再创建副本，而是直接使用原值，当数据比较大时（例如结构和类）这样的引用参数能够节省很多时间。但是假如不希望在函数中修改参数的话，则应该在声明和定义时加上const。
 
@@ -650,7 +667,7 @@ mouse=cat;//这时并不会让mouse变成cat的别名，他们依然指向不同
 double s(const double & a);
 double res=s(1.0);
 ```
-在这种情况下，如果前面声明时没有在引用参数前加上const的话，就不能直接使用常量。只有加上const以后，才能将常量生成一个临时变量，并让a去代表它
+在这种情况下，如果前面声明时没有在引用参数前加上const的话，第二句就不能直接使用常量作为参数。只有加上const以后，才能将常量生成一个临时变量，并让a去代表它
 
 &emsp;&emsp;另外返回值也可以是是引用：
 ```
@@ -1003,6 +1020,10 @@ private:
 这里指的意思是声明为常量成员函数，表明其不被允许修改类的数据成员。这个const实际上是作用在this上的。
 
 &emsp;&emsp;一般来说尽量要使用const。
+
+&emsp;&emsp;另外一般来说类中的变量凡是初始化以后不会被修改的变量都应该声明为const。
+
+&emsp;&emsp;需要注意的是const对象只能访问const成员函数,而非const对象可以访问任意的成员函数,包括const成员函数.
 
 ### 类的成员函数和变量之间的顺序关系
 &emsp;&emsp;即使声明在成员函数之后的变量也是可以被成员函数使用的。因为会首先编译所有成员的声明然后才是函数体。
