@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-02 18:57:30
- * @LastEditTime: 2020-06-11 22:23:43
+ * @LastEditTime: 2020-06-16 21:55:37
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataBase\MySQL.md
@@ -543,6 +543,36 @@ HAVING COUNT(*)>=2
 
 这里的HAVING和WHERE是有去别的，HAVING作用于不同的组，而WHERE作用于行。
 
+### 子查询
+子查询中只能返回一个字段的数据。
+
+可以将子查询的结果作为 WHRER 语句的过滤条件：
+```
+SELECT *
+FROM mytable1
+WHERE col1 IN (SELECT col2
+               FROM mytable2);
+```
+下面的语句可以检索出客户的订单数量，为了执行这个操作，遵循下面的步骤。
+- 从customers表中检索客户列表。
+- 对于检索出的每个客户，统计其在orders表中的订单数目。
+正如前两章所述，可使用SELECT COUNT(*)对表中的行进行计数，并且通过提供一条WHERE子句来过滤某个特定的客户ID，可仅对该客户的订单进行计数。例如，下面的代码对客户10001的订单进行计数：
+```
+SELECT COUNT(*)
+FROM Orders
+WHERE cust_id=10001
+```
+为了对每个客户执行COUNT(\*)计算，应该将COUNT*)作为一个子查询。请看下面的代码：
+```
+SELECT cust_name, (SELECT COUNT(*)
+                   FROM Orders
+                   WHERE Orders.cust_id = Customers.cust_id)
+                   AS orders_num
+FROM Customers
+ORDER BY cust_name;
+```
+这条SELECT语句对customers表中每个客户返回3列：cust_name、cust_state和orders。orders是一个计算字段，它是由圆括号中的子查询建立的。该子查询对检索出的每个客户执行一次。
+
 #### SELECT子句的顺序
 &emsp;&emsp;SELECT所有的子句顺序遵循如下规定：
 ![](shunxu.jpg)
@@ -601,6 +631,15 @@ WHERE p1.vend_id=p2.vend_idwells
 ```
 这种情况被称之为自联结，因为此查询中需要的两个表实际上是相同的表。因此wells表在FROM子句中出现了两次。虽然这是完全合法的，但对wells的引用具有二义性，因为MySQL不知道你引用的是wells表中的哪个实例。为解决此问题，使用了表别名。wells的第一次出现为别名p1，第二次出现为别名p2。现在可以将这些别名用作表名。例如，SELECT语句使用p1前缀明确地给出所需列的全名。如果不这样，MySQL将返回错误，因为分别存在两个名为prod_id、prod_name的列。MySQL不知道想要的是哪一个列（即使它们事实上是同一个列）。WHERE（通过匹配p1中的vend_id和p2中的vend_id）首先联结两个表，然后按第二个表中的prod_id过滤数据，返回所需的数据。
 
+#### 自然联结
+自然连接是把同名列通过等值测试连接起来的，同名列可以有多个。
+
+内连接和自然连接的区别：内连接提供连接的列，而自然连接自动连接所有同名列。
+```
+SELECT A.value, B.value
+FROM tablea AS A NATURAL JOIN tableb AS B;
+```
+
 #### 外部联结
 上面使用INNER JOIN的被称为内部联结，它可以匹配所有的关联项，但是像那些没有关联项的是不会返回的，如果想返回非关联项，可以使用外部联结：
 ```
@@ -613,7 +652,185 @@ OUTER JOIN表示外部联结，但是前面还需有LEFT或者RIGHT指定包括�
 ### 组合查询
 UNION 基本和WHERE的功能一样
 
+使用 UNION 来组合两个查询，如果第一个查询返回 M 行，第二个查询返回 N 行，那么组合查询的结果一般为 M+N 行。
+
+每个查询必须包含相同的列、表达式和聚集函数。
+
+默认会去除相同行，如果需要保留相同行，使用 UNION ALL。
+
+只能包含一个 ORDER BY 子句，并且必须位于语句的最后。
+```
+SELECT col
+FROM mytable
+WHERE col = 1
+UNION
+SELECT col
+FROM mytable
+WHERE col =2;
+```
+
 ### 全文本搜索
-在索引之后，SELECT可与Match()和Against()一起使用以实际执行搜索。
+在索引之后，SELECT可与Match()和Against()一起使用以实际执行搜索。需要在创建的时候就允许全文本搜索：
+```
+CREATE TABLE table_name
+(
+...
+  FULLTEXT(column_name)//指定列，可以是多个列
+)
+```
+为了进行全文本搜索，MySQL根据子句FULLTEXT(column_name)的指示对它进行索引。这里的FULLTEXT索引单个列，如果需要也可以指定多个列。
+
+在进行全文本搜索时，使用Against()和Match()执行全文本搜索，其中Match()指定被搜索的列，Against()指定要使用的搜索表达式：
+```
+SELECT note_text
+FROM productnotes
+WHERE Match(note_text) Against('rabbit')
+```
+此时所有包含rabbit的行都将会返回。
 
 ### 插入数据
+#### 插入完整一行
+```
+INSERT INTO wells
+VALUES(
+  NULL,
+  'wells',
+  '100',
+  NULL
+)
+```
+这里提供的每一个值都将会按照顺序存在wells表的每一列中。因此这种写法必须非常清楚表的每一列内容，写错一列后面就全错了，不是非常安全，所以也可以有如下这种写法：
+```
+INSERT INTO wells(
+  address,
+  name,
+  price,
+  zip,
+)
+VALUES(
+  NULL,
+  'wells',
+  '100',
+  NULL
+)
+```
+也就是说提前指定好该往哪个列中插入数据，然后也是按照指定的顺序写入值。这种时候，没有指定的列（即被认为是不需要插入数据的列）可以省略，但是有条件：
+- 该列允许NULL值
+- 在表定义中给出默认值。
+满足以上任一条件才能省略。
+
+数据库经常被多个客户访问，对处理什么请求以及用什么次序处理进行管理是MySQL的任务。INSERT操作可能很耗时（特别是有很多索引需要更新时），而且它可能降低等待处理的SELECT语句的性能。如果数据检索是最重要的（通常是这样），则你可以通过在INSERT和INTO之间添加关键字LOW_PRIORITY，指示MySQL降低INSERT语句的优先级，如下所示：顺便说一下，这也适用于下一章介绍的UPDATE和DELETE语句。
+
+#### 插入多行
+```
+INSERT INTO wells(
+  name,
+  price,
+)
+VALUES(
+  'wells',
+  '100'
+)
+(
+  'jake',
+  '50;
+)
+```
+
+#### 插入检索出的数据
+```
+INSERT INTO wells(
+  name,
+  price,
+)
+SELECT name,
+      price
+FROM jake
+```
+这种命令的作用其实是在表之间进行迁移，将jake表中的name和price列移到了wells表中。这里两张表的列名不一定非得一样，转移的时候也是按照写的顺序转移的。
+
+#### 将一个表的内同插入到新表
+```
+CREATE TABLE newtable AS
+SELECT * FROM mytable;
+```
+
+### 更新和删除数据
+#### 更新
+```
+UPDATE wells
+SET email='conan@163.com'
+WHERE id=100
+```
+UPDATE语句总是以要更新的表的名字开始。在此例子中，要更新的表的名字为wells。SET命令用来将新值赋给被更新的列。UPDATE语句以WHERE子句结束，它告诉MySQL更新哪一行。没有WHERE子句，MySQL将会用这个电子邮件地址更新customers表中所有行。
+
+#### 删除
+```
+DELETE FROM wells
+WHERE id=10
+```
+
+### 创建表
+```
+CREATE TABLE mytable (
+  # int 类型，不为空，自增
+  id INT NOT NULL AUTO_INCREMENT,
+  # int 类型，不可为空，默认值为 1，不为空
+  col1 INT NOT NULL DEFAULT 1,
+  # 变长字符串类型，最长为 45 个字符，可以为空
+  col2 VARCHAR(45) NULL,
+  # 日期类型，可为空
+  col3 DATE NULL,
+  # 设置主键为 id
+  PRIMARY KEY (`id`));
+```
+### 修改表
+添加列
+```
+ALTER TABLE mytable
+ADD col CHAR(20);
+```
+删除列
+```
+ALTER TABLE mytable
+DROP COLUMN col;
+```
+删除表
+```
+DROP TABLE mytable;
+```
+
+### 视图
+视图是一种虚拟的表，本身不包含数据，它存在的意义是可以从几张表中提取有用的列并组合在一起，但是这种组合的方式比较像“链表”，只存指针，本身并不包含数据，也不能对进行索引操作。也可以说其本质就是对一张或几张表进行一个特定的SELECT操作。
+
+对视图的操作和对普通表的操作一样。
+
+视图具有如下好处：
+- 简化复杂的 SQL 操作，比如复杂的连接；
+- 只使用实际表的一部分数据；
+- 通过只给用户访问视图的权限，保证数据的安全性；
+- 更改数据格式和表示。
+
+创建视图：
+```
+CREATE VIEW myview AS
+SELECT Concat(col1, col2) AS concat_col, col3*col4 AS compute_col
+FROM mytable
+WHERE col5 = val;
+```
+
+#### 更新视图
+迄今为止的所有视图都是和SELECT语句使用的。然而，视图的数据能否更新？答案视情况而定。
+
+通常，视图是可更新的（即，可以对它们使用INSERT、UPDATE和DELETE）。更新一个视图将更新其基表（可以回忆一下，视图本身没有数据）。如果你对视图增加或删除行，实际上是对其基表增加或删除行。
+
+但是，并非所有视图都是可更新的。基本上可以说，如果MySQL不能正确地确定被更新的基数据，则不允许更新（包括插入和删除）。这实际上意味着，如果视图定义中有以下操作，则不能进行视图的更新：
+- 分组（使用GROUP BY和HAVING）；
+- 联结
+- 子查询
+- 并
+- 聚集函数（Min，Count，Sum等）
+- DISTINCT；
+- 导出（计算）列
+
+换句话说，本章许多例子中的视图都是不可更新的。这听上去好像是一个严重的限制，但实际上不是，因为视图主要用于数据检索。
