@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-02 18:57:30
- * @LastEditTime: 2020-06-16 21:55:37
+ * @LastEditTime: 2020-06-17 21:20:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataBase\MySQL.md
@@ -834,3 +834,337 @@ WHERE col5 = val;
 - 导出（计算）列
 
 换句话说，本章许多例子中的视图都是不可更新的。这听上去好像是一个严重的限制，但实际上不是，因为视图主要用于数据检索。
+
+### 使用存储过程
+之前的所有的SQL语句都是针对一个或几个表的单条语句，但是很多时候可能一个操作需要很多条语句才能完成，这时可以把很多句语句写到一个存储过程中，这样就能通过一个语句直接运行它。
+
+从以上描述来说存储过程其实和编程语言中的函数差不多，与前面讲过SQL语言中的函数相比，本质上他们也没区别。只是函数只能返回一个变量的限制；而存储过程可以返回多个。函数是可以嵌入在sql中使用的,可以在select中调用，而存储过程不行。函数限制比较多，如不能用临时表，只能用表变量等，而存储过程的限制相对就比较少。此外：
+1. 一般来说，存储过程实现的功能要复杂一点，而函数的实现的功能针对性比较强。
+2. 当对数据库进行复杂操作时(如对多个表进行Update、Insert、Query、Delete时），可将此复杂操作用存储过程封装起来与数据库提供的事务处理结合一起使用。存储过程可以从自己的存储过程内引用其它存储过程，这可以简化一系列复杂语句.  
+3. 存储过程一般是作为一个独立的部分来执行，而函数可以作为查询语句的一个部分来调用，由于函数可以返回一个表对象，因此它可以在查询语句中位于FROM关键字的后面。
+4. 存储过程只在创造时进行编译，以后每次执行存储过程都不需再重新编译，而一般SQL语句每执行一次就编译一次,所以使用存储过程可提高数据库执行速度。
+5. 存储过程可以接受参数、输出参数、返回单个或多个结果集以及返回值，可以向程序返回错误原因。但函数只能返回一个特定类型的值或者表对象。
+6. 存储过程中的CRUD的操作会影响数据库状态，但函数却不能。
+
+使用存储过程的好处有：
+- 代码封装，保证了一定的安全性；
+- 代码复用
+- 由于是预先编译，因此具有很高的性能。
+
+包含 in、out 和 inout 三种参数。
+
+给变量赋值都需要用 select into 语句。
+
+每次只能给一个变量赋值，不支持集合的操作。
+
+#### 创建存储过程和使用
+```
+CREATE PROCEDURE myprocedure( OUT ret int )
+    BEGIN
+        DECLARE y int;
+        SELECT sum(col1)
+        FROM mytable INTO y;
+        SELECT y*y INTO ret;
+    END 
+```
+```
+CALL myprocedure(@ret);
+SELECT @ret;
+```
+
+注意，如果是在MySQL的命令行中写命令的话，因为命令行中创建存储过程需要自定义分隔符，而命令行是以 ; 为结束符，而存储过程中也包含了分号，因此会错误把这部分分号当成是结束符，造成语法错误。解决办法是临时更改命令行实用程序的语句分隔符，如下所示：
+```
+DELIMITER //
+
+CREATE PROCEDURE myprocedure( OUT ret int )
+    BEGIN
+        DECLARE y int;
+        SELECT sum(col1)
+        FROM mytable INTO y;
+        SELECT y*y INTO ret;
+    END //
+
+DELIMITER;
+```
+其中，DELIMITER //告诉命令行实用程序使用//作为新的语句结束分隔符，可以看到标志存储过程结束的END定义为END//而不是END;。这样，存储过程体内的;仍然保持不动，并且正确地传递给数据库引擎。最后，为恢复为原来的语句分隔符。
+
+#### 删除存储过程
+```
+DROP PROCEDURE myprocedure;
+```
+
+#### 使用参数
+可以像编程语言中的函数一样为存储过程设计参数（包括传入和传出），就想前面的OUT ret int，就是声明了一个ret变量，它的类型为int，设定为传出参数，也就是最后的结果。如果想传入参数，可以使用IN，如果想要传入进去然后进行修改再传出，可以使用INOUT（就像c++里的&）。z
+
+在使用传递过程时必须使用在变量前加@，后面在使用这些变量的时候也必须加@。
+
+### 游标
+游标比较类似STL中的迭代器，可以对某一组结果集中的每一行进行遍历。
+
+使用游标有四个步骤：
+1. 声明游标，这个过程没有实际检索出数据；
+2. 打开游标；
+3. 取出数据
+4. 关闭游标
+
+游标只能在存储过程中使用。
+
+#### 创建游标
+游标用DECLARE语句创建：
+```
+CREATE PROCEDURE processorders()
+BEGIN
+  DECLARE ordernumbers CURSOR
+  FOR
+  SELECT order_num FROM orders;
+END;
+```
+DECLARE语句定义了一个叫ordernumbers的游标，并将其用于order_num这个列中。
+
+#### 打开关闭游标
+游标用OPEN CURSOR语句来打开：
+```
+OPEN ordernumbers
+```
+游标处理完成后需要关闭：
+```
+CLOSE ordernumbers
+```
+
+#### 使用游标数据
+在一个游标被打开后，可以使用FETCH语句分别访问它的每一行。FETCH指定检索什么数据（所需的列），检索出来的数据存储在什么地方。它还向前移动游标中的内部行指针，使下一条FETCH语句检索下一行（不重复读取同一行）。
+
+第一个例子从游标中检索单个行（第一行）：
+```
+CREATE PROCEDURE processorders()
+BEGIN
+  DECLARE o INT;
+
+  DECLARE ordernumbers CURSOR
+  FOR
+  SELECT order_num FROM orders;
+
+  OPEN ordernumbers;
+
+  FETCH ordernumbers INTO o;
+
+  CLOSE ordernumbers;
+END;
+```
+其中FETCH用来检索当前行的order_num列（将自动从第一行开始）到一个名为o的局部声明的变量中。对检索出的数据不做任何处理。
+
+在下一个例子中，循环检索数据，从第一行到最后一行：
+```
+CREATE PROCEDURE processorders()
+BEGIN
+  DECLARE done BOOLEAN DEFAULT 0;
+  DECLARE o INT;
+
+  DECLARE ordernumbers CURSOR
+  FOR
+  SELECT order_num FROM orders;
+
+  DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done=1;
+
+  OPEN ordernumbers;
+  REPEAT
+
+    FETCH ordernumbers INTO o;
+
+  UNTIL done END REPEAT;
+
+  CLOSE ordernumbers
+END;
+```
+与前一个例子一样，这个例子使用FETCH检索当前order_num到声明的名为o的变量中。但与前一个例子不一样的是，这个例子中的FETCH是在REPEAT内，因此它反复执行直到done为真（由UNTILdone END REPEAT;规定）。为使它起作用，用一个DEFAULT 0（假，不结束）定义变量done。那么，done怎样才能在结束时被设置为真呢？答案是用以下语句：
+```
+DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done=1;
+```
+这条语句定义了一个CONTINUE HANDLER，它是在条件出现时被执行的代码。这里，它指出当SQLSTATE '02000'出现时，SET done=1。SQLSTATE '02000'是一个未找到条件，或者说是MySQL中定义的一个错误代码，当REPEAT由于没有更多的行供循环而不能继续时，出现这个条件。
+
+### 触发器
+触发器就像编程语言中的条件语句（if），当某一个条件达成时就会触发某一个命令。
+
+触发器是MySQL响应以下任意语句而自动执行的一条MySQL语句（或位于BEGIN和END语句之间的一组语句）：
+- DELETE；
+- INSERT；
+- UPDATE。
+
+其他MySQL语句不支持触发器。
+
+#### 创建触发器
+触发器用CREATE TRIGGER语句创建。下面是一个简单的例子：
+```
+CREATE TRIGGER newproduct AFTER INSERT ON products
+FOR EACH ROW SELECT 'Product added';
+```
+这里CREATE TRIGGER用来创建名为newproduct的新触发器。触发器可在一个操作发生之前或之后执行，这里给出了AFTER INSERT，所以此触发器将在INSERT语句成功执行后执行（在前使用BEFORE）。这个触发器还指定FOR EACH ROW，因此代码对每个插入行执行。在这个例子中，文本Product added将对每个插入的行显示一次。
+
+仅支持表 只有表才支持触发器，视图不支持（临时表也不支持）。
+
+触发器按每个表每个事件每次地定义，每个表每个事件每次只允许一个触发器。因此，每个表最多支持6个触发器（每条INSERT、UPDATE和DELETE的之前和之后）。单一触发器不能与多个事件或多个表关联，所以，如果你需要一个对INSERT和UPDATE操作执行的触发器，则应该定义两个触发器。
+
+BEFORE 用于数据验证和净化，AFTER 用于审计跟踪，将修改记录到另外一张表中。
+
+INSERT 触发器包含一个名为 NEW 的虚拟表。
+```
+CREATE TRIGGER mytrigger AFTER INSERT ON mytable
+FOR EACH ROW SELECT NEW.col into @result;
+
+SELECT @result; -- 获取结果
+```
+DELETE 触发器包含一个名为 OLD 的虚拟表，并且是只读的。
+
+UPDATE 触发器包含一个名为 NEW 和一个名为 OLD 的虚拟表，其中 NEW 是可以被修改的，而 OLD 是只读的。
+
+MySQL 不允许在触发器中使用 CALL 语句，也就是不能调用存储过程。
+
+### 事务管理
+所谓事务就是指一组SQL语句，但是他跟存储过程不一样。例如现在有两张表，一张存所有的订单，另一张存每一种商品的信息，两张表应该是有关联的，例如增加订单数据的时候，应该也必须检测商品信息，然后把商品的主键存在订单表中。这几步操作必须全部做完才算完成了一个数据添加过程，万一中间被中断了就会出现问题。所以事务的作用就是保证这一系列的操作全部都能做完，万一出故障了中间哪一步没有完成，也能让整个数据库回退到之前的状态。
+
+在使用事务和事务处理时，有几个关键词汇反复出现。下面是关于事务处理需要知道的几个术语：
+- 事务（transaction）指一组SQL语句；
+- 回退（rollback）指撤销指定SQL语句的过程；
+- 提交（commit）指将未存储的SQL语句结果写入数据库表；
+- 保留点（savepoint）指事务处理中设置的临时占位符（placeholder），你可以对它发布回退（与回退整个事务处理不同）。
+
+#### 控制事务处理
+MySQL使用下面的语句来标识事务的开始：
+```
+START TRANSACTION
+```
+
+##### ROLLBACK
+MySQL的ROLLBACK命令用来回退（撤销）MySQL语句，请看下面的语句：
+```
+SELECT * FROM ordertotals;
+START TRANSACTION;
+DELETE FROM ordertotals;
+ROLLBACK;
+SELECT * FROM ordertotals;
+```
+这个例子从显示ordertotals表的内容开始。首先执行一条SELECT以显示该表不为空。然后开始一个事务处理，用一条DELETE语句删除ordertotals中的所有行。这时用一条ROLLBACK语句回退START TRANSACTION之后的所有语句，最后一条SELECT语句显示该表不为空。
+
+显然，ROLLBACK只能在一个事务处理内使用（在执行一条START TRANSACTION命令之后）。
+
+##### COMMIT
+一般的MySQL语句都是直接针对数据库表执行和编写的。这就是所谓的隐含提交（implicit commit），即提交（写或保存）操作是自动进行的。
+
+但是，在事务处理块中，提交不会隐含地进行。为进行明确的提交，使用COMMIT语句，如下所示：
+```
+START TRANSACTION;
+DELETE FROM orderitems WHERE order_num=20010;
+DELETE FROM orders WHERE order_num=20010;
+COMMIT;
+```
+在这个例子中，从系统中完全删除订单20010。因为涉及更新两个数据库表orders和orderItems，所以使用事务处理块来保证订单不被部分删除。最后的COMMIT语句仅在不出错时写出更改。如果第一条DELETE起作用，但第二条失败，则DELETE不会提交（实际上，它是被自动撤销的）。
+
+##### SAVEPOINT
+简单的ROLLBACK和COMMIT语句就可以写入或撤销整个事务处理。但是，只是对简单的事务处理才能这样做，更复杂的事务处理可能需要部分提交或回退。
+
+为了支持回退部分事务处理，必须能在事务处理块中合适的位置放置占位符。这样，如果需要回退，可以回退到某个占位符。这些占位符称为保留点。为了创建占位符，可如下使用SAVEPOINT语句：
+```
+SAVEPOINT deletel;
+```
+每个保留点都取标识它的唯一名字，以便在回退时，MySQL知道要回退到何处。为了回退到本例给出的保留点，可如下进行：
+```
+ROLLBACK TO deletel;
+```
+
+##### 更改默认的提交行为
+正如所述，默认的MySQL行为是自动提交所有更改。换句话说，任何时候你执行一条MySQL语句，该语句实际上都是针对表执行的，而且所做的更改立即生效。为指示MySQL不自动提交更改，需要使用以下语句：
+```
+SET autocommit=0;
+```
+autocommit标志决定是否自动提交更改，不管有没有COMMIT语句。设置autocommit为0（假）指示MySQL不自动提交更改（直到autocommit被设置为真为止）。
+
+autocommit标志是针对每个连接而不是服务器的。
+
+### 字符集
+
+基本术语：
+
+- 字符集为字母和符号的集合；
+- 编码为某个字符集成员的内部表示；
+- 校对字符指定如何比较，主要用于排序和分组。
+
+除了给表指定字符集和校对外，也可以给列指定：
+
+```sql
+CREATE TABLE mytable
+(col VARCHAR(10) CHARACTER SET latin COLLATE latin1_general_ci )
+DEFAULT CHARACTER SET hebrew COLLATE hebrew_general_ci;
+```
+
+可以在排序、分组时指定校对：
+
+```sql
+SELECT *
+FROM mytable
+ORDER BY col COLLATE latin1_general_ci;
+```
+
+### 权限管理
+
+MySQL 的账户信息保存在 mysql 这个数据库中。
+
+```sql
+USE mysql;
+SELECT user FROM user;
+```
+
+**创建账户**  
+
+新创建的账户没有任何权限。
+
+```sql
+CREATE USER myuser IDENTIFIED BY 'mypassword';
+```
+
+**修改账户名**  
+
+```sql
+RENAME USER myuser TO newuser;
+```
+
+**删除账户**  
+
+```sql
+DROP USER myuser;
+```
+
+**查看权限**  
+
+```sql
+SHOW GRANTS FOR myuser;
+```
+
+**授予权限**  
+
+账户用 username@host 的形式定义，username@% 使用的是默认主机名。
+
+```sql
+GRANT SELECT, INSERT ON mydatabase.* TO myuser;
+```
+
+**删除权限**  
+
+GRANT 和 REVOKE 可在几个层次上控制访问权限：
+
+- 整个服务器，使用 GRANT ALL 和 REVOKE ALL；
+- 整个数据库，使用 ON database.\*；
+- 特定的表，使用 ON database.table；
+- 特定的列；
+- 特定的存储过程。
+
+```sql
+REVOKE SELECT, INSERT ON mydatabase.* FROM myuser;
+```
+
+**更改密码**  
+
+必须使用 Password() 函数进行加密。
+
+```sql
+SET PASSWROD FOR myuser = Password('new_password');
+```
