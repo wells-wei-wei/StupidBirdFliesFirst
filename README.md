@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-15 16:16:41
+ * @LastEditTime: 2020-06-18 20:31:34
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -16,7 +16,7 @@
 - 算法
   - [二叉树](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/BinaryTree.md)
 - 数据库
-  - [MySQL](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/MySQL.md)
+  - [SQL基本语句](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQL.md)
   - [关系型数据库和非关系型数据库](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQLAndNoSQL.md)
   - [Redis](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/Redis.md)
 - 机器学习基础知识

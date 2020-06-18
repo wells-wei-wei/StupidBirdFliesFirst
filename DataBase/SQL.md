@@ -1,12 +1,12 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-02 18:57:30
- * @LastEditTime: 2020-06-17 21:20:13
+ * @LastEditTime: 2020-06-18 20:30:45
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataBase\MySQL.md
 --> 
-# MySQL
+# SQL基本语句
 参考书目：
 - 《MySQL必知必会》
 
@@ -43,14 +43,14 @@
 - 不更新主键中的值
 - 不重用主键中的值
 - 不在主键中存将会被更改的值
-  
-## SQL
-&emsp;&emsp;SQL是结构化查询语言，是一种专门用来和数据库通信的语言。
 
 ## MySQL
 &emsp;&emsp;数据库的所有存储、检索、管理和处理都是由数据库软件（DBMS）来实现的，MySQL就是其中一种。
 
 &emsp;&emsp;一般来说DBMS分为两类，一种是基于共享文件系统，例如Access，用于桌面用途，不用于高端或者关键应用；另一种是基于客户机-服务器的数据库，例如MySQL，Oracle等。
+
+## SQL基本语句
+&emsp;&emsp;SQL是结构化查询语言，是一种专门用来和数据库通信的语言。
 
 ### 连接
 &emsp;&emsp;数据库的连接与连接服务器相似，需要指定IP地址和端口，以及用户名和密码。
