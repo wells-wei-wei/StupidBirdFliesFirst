@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-06-18 08:22:19
+ * @LastEditTime: 2020-06-18 21:41:54
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -994,7 +994,7 @@ struct Ex{
     }
 }
 ```
-也就说说有对于内部数据的处理都是需要传入调用它的对象的指针的，调用所有的成员变量都需要这个指针，只是写的时候可以省略而已。this最大的作用在于可以由它访问类内的所有成员，包括private。一般可以用在有明明冲突的地方：
+也就说说有对于内部数据的处理都是需要传入调用它的对象的指针的，调用所有的成员变量都需要这个指针，只是写的时候可以省略而已。this最大的作用在于可以由它访问类内的所有成员，包括private。一般可以用在有明显冲突的地方：
 ```
 class obj{
 private:
@@ -1006,6 +1006,11 @@ public
     }
 };
 ```
+
+另外需要注意：
+- 一个对象的this指针并不是对象本身的一部分，不会影响sizeof(对象)的结果。
+- this指针是一种A* const类型的指针，也就是说只能指向当前对象，不能指向别的对象，但是可以由它来修改成员变量的值。
+- 对于加上const的成员函数（就是下面将要说的这一种），这时这个成员函数不允许修改成员，所以这时的this就变为了const A* const类型。
 
 ### 引入const
 &emsp;&emsp;在成员函数的参数列表后面写上一个const：
