@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-15 19:36:05
- * @LastEditTime: 2020-06-19 21:24:24
+ * @LastEditTime: 2020-06-19 22:47:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataStructure\DataStructure.md
@@ -185,4 +185,175 @@ public:
         return queueSize;
     }
 };
+```
+
+### 栈
+栈跟队列相反，存储的数据按照顺序先进后出
+
+#### 栈的数组实现
+因为一开始入栈的数据会最晚出去，出去栈就空了，所以不用循环数组：
+```c++
+#define MAXSIZE 10;
+
+template<class T>
+class Stack{
+public:
+    //默认构造函数
+    Stack():maxSize(MAXSIZE),top(-1){
+        arrays=new T[maxSize];
+        if(arrays==NULL) cout<<"动态分配内存失败";
+    }
+
+    Stack(size_t maxElements):maxSize(maxElements),top(-1){
+        arrays=new T[maxSize];//创建存储栈的数组
+    }
+
+	Stack(T data[],size_t maxElments):maxSize(maxElements),top(-1){
+        arrays=new T[maxSize];//创建存储栈的数组
+
+	    for(size_t i=0;i<maxSize;i++){
+		    arrays[i]=data[i];
+	    }
+	    top+=maxSize;
+    }
+
+	~Stack(){
+        delete[] arrays;
+    }
+
+	//入栈
+	void Push(T data){
+        if(isFull()){
+		    throw runtime_error("Full stack");
+        }
+	    else{
+            top++;//指向栈顶
+            arrays[top]=data;	
+	    }
+    }
+
+	//出栈并返回
+	T Pop(){
+        if(isEmpty()){
+		    throw runtime_error("No elements in the stack");
+	    }
+	    else{
+		    T data=arrays[top];
+		    top--;
+		    return data;
+	    }
+    }
+
+	//返回栈顶元素
+	T Top(){
+        if(isEmpty()){
+		    throw runtime_error("No elements in the stack");
+	    }
+	    else{
+		    return arrays[top];
+	    }
+    }
+
+	//判断是否为空栈
+	bool isEmpty(){
+        return top==-1;
+    }
+
+	//栈是否已满
+	bool isFull(){
+        return top==maxSize-1;
+    }
+ 
+	//清空栈
+	void Clear(){
+        while (top!=-1){
+		    top--;
+	    }
+    }
+
+	//获得栈里元素的个数
+	size_t GetSize(){
+        return top+1;
+    }
+
+private:
+	//栈标指示器
+	size_t top;
+
+	//数组
+	T *arrays;
+
+	//栈的容量
+	size_t maxSize;
+};
+```
+
+#### 栈的链表实现
+链表实现栈最大的难点是出栈时该怎么让指针回到上一个数据。为了避免这种问题，链表的栈push进来的数据全部都插在head后面：
+```c++
+template <typename T> 
+class Stack {
+    struct node {
+        T value;  //储存的值
+        node *next;
+        node() :next(nullptr) {};
+        node(T t) : value(t), next(nullptr) {}
+    };
+
+    int length; //入栈数量
+    node *head; //栈的头部
+public:
+    Stack() { 
+        length = 0; 
+        head = new node; 
+    }
+
+    //入栈
+    void push(T arg){
+        node* pnode = new node(arg);
+        pnode->next = head->next;
+        head->next = pnode;
+        length++;
+    }
+    //出栈
+    T pop(){
+        if (head->next!=NULL){
+            node* pnode = head->next;
+            T pdata = pnode->value;
+            head->next = head->next->next;
+            delete pnode;
+            return pdata;
+        }
+    }
+
+    //获取栈顶元素
+    T top(){
+        while (head->next!=NULL){
+            return head->next->value;
+        }
+    }
+
+    void print(); //打印栈
+    int size(); //获取栈内元素个数
+    bool isEmpty(); //判断空
+};
+
+template<typename T>
+void Stack<T>::print() {
+    while (head->next != NULL)
+    {
+        head = head->next;
+        cout << head->value << endl;
+    }
+}
+
+template<typename T>
+int Stack<T>::size() {
+    return length;
+}
+
+template<typename T>
+bool Stack<T>::isEmpty() {
+    return length == 0;
+}
 ```

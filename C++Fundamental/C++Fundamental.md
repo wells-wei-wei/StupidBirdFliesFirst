@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-06-18 21:41:54
+ * @LastEditTime: 2020-06-19 21:38:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -1559,7 +1559,7 @@ private:
 
 &emsp;&emsp;因为静态数据并不属于任何一个对象，所以它们不能在创建对象的时候就被定义，甚至不能被构造函数初始化，也不应该在类的内部初始化静态成员。所以必须在类的外部定义和初始化每个静态成员（但是类内还是得带着static声明一下，外面就不用带着static了），只能定义一次。
 
-&emsp;&emsp;不过也有例外，类的静态成员也可以在类内提供一个类内初值，但是要求是字面值常量类型的constexpr：
+&emsp;&emsp;不过也有例外，类的静态成员也可以在类内提供一个类内初值，只有两种情况可以在类内为静态变量提供初值，就是用const或者constexpr修饰的静态变量：
 ```
 class Account{
 public:
@@ -1569,6 +1569,7 @@ private:
     static constexpr int period=30;
 }
 ```
+但是这两者也有点区别，用const修饰的静态类内变量可以给初值也可以不给，用constexpr修饰的则必须给初值，而且这两种要给就一定得给字面值常量类型。
 
 &emsp;&emsp;类的函数成员也可以被定义为静态的，但是此时就不能通过对象来调用静态的成员函数，甚至不能使用this指针。在使用时只能用类名来作为作用域名，这更说明它其实是独立的，是所有对象共有的，与单个对象关系不大，所以它在函数体中也只能使用静态的类成员。
 
