@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-19 21:27:00
+ * @LastEditTime: 2020-06-21 17:46:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -14,14 +14,20 @@
   - [C++基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/C%2B%2BFundamental.md)
   - [Cmake](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/cmake.md)
 - 数据结构
-  - [线性表](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataStructure/DataStructure.md)
+  - [线性表](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataStructure/LinearTable.md)
 - 算法
+  - [排序](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/sort.md) 
   - [二叉树](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/BinaryTree.md)
+  - [动态规划](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/DynamicProgramming.md)
+- 计算机网络
+  - [TCP的三次握手和四次挥手](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Network/TCPConnect.md)
 - 数据库
   - [SQL基本语句](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQL.md)
+  - [索引](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/index.md)
   - [关系型数据库和非关系型数据库](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQLAndNoSQL.md)
   - [Redis](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/Redis.md)
-- 机器学习基础知识
+- 机器学习
+  - [基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/MachineLearning.md) 
   - [感知机](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/Perceptron.pdf)
   - [多层感知机（反向传播）](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/BP.pdf)
   - [激活函数](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/ActivationFunction/ActivationFunction.md)

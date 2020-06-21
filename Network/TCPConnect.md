@@ -1,12 +1,12 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-26 21:05:43
- * @LastEditTime: 2020-05-26 21:46:10
+ * @LastEditTime: 2020-06-21 17:44:39
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\Network\TCPConnect.md
 --> 
-# TCP协议的三次握手
+# TCP协议连接的建立和解除
 ## 概念性讲解
 &emsp;&emsp;TCP协议中其实并没有物理意义上上的连接，只是一种数据包的互相发送。其中三次握手指的是客户端和服务器建立连接的过程。“握手”指的是在建立连接的过程中产生的三次数据发送。首先的两次握手是最基本的。第一次握手，客户端发了个连接请求消息到服务端，服务端收到信息后知道自己与客户端是可以连接成功的，但此时客户端并不知道服务端是否已经接收到了它的请求，所以服务端接收到消息后的应答，客户端得到服务端的反馈后，才确定自己与服务端是可以连接上的，这就是第二次握手。第三次握手是为了防止已经失效的连接请求报文段突然又传到服务端，因而产生错误。
 
