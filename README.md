@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-22 11:24:33
+ * @LastEditTime: 2020-06-22 15:01:52
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -23,6 +23,7 @@
   - [TCP的三次握手和四次挥手](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Network/TCPConnect.md)
 - 操作系统
   - [基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/Fundamental.md)
+  - [进程管理](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/ProcessManagement.md)
 - 数据库
   - [SQL基本语句](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQL.md)
   - [索引](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/index.md)
