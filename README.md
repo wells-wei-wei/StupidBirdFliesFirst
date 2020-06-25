@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-24 21:30:27
+ * @LastEditTime: 2020-06-25 10:09:26
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -21,6 +21,11 @@
   - [动态规划](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/DynamicProgramming.md)
 - 计算机网络
   - [基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Network/Fundamental.md)
+  - [物理层](Network/PhysicalLayer.md)
+  - [链路层](Network/LinkLayer.md)
+  - [网络层](Network/NetLayer.md)
+  - [传输层](Network/TransferLayer.md)
+  - [应用层](Network/ApplicationLayer.md)
   - [TCP的三次握手和四次挥手](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Network/TCPConnect.md)
 - 操作系统
   - [基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/Fundamental.md)
