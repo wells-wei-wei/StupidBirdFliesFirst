@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-25 10:09:26
+ * @LastEditTime: 2020-06-25 22:05:30
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -32,10 +32,12 @@
   - [进程管理](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/ProcessManagement.md)
   - [内存管理](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/MemoryManagement.md)
 - 数据库
+  - [基本知识](DataBase/Fundamental.md)
+  - [MySQL](DataBase/MySQL.md)
   - [SQL基本语句](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQL.md)
   - [索引](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/index.md)
   - [关系型数据库和非关系型数据库](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/SQLAndNoSQL.md)
-  - [Redis](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataBase/Redis.md)
+  - [Redis](DataBase/Redis.md)
 - 机器学习
   - [基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/MachineLearning.md) 
   - [感知机](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/Perceptron.pdf)
