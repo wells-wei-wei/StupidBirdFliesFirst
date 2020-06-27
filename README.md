@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-25 22:05:30
+ * @LastEditTime: 2020-06-27 23:07:22
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -15,6 +15,7 @@
   - [Cmake](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/cmake.md)
 - 数据结构
   - [线性表](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataStructure/LinearTable.md)
+  - [树](DataStructure/tree.md)
 - 算法
   - [排序](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/sort.md) 
   - [二叉树](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/BinaryTree.md)
