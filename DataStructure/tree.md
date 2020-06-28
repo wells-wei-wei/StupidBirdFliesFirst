@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-26 22:42:25
- * @LastEditTime: 2020-06-27 23:06:38
+ * @LastEditTime: 2020-06-28 23:54:41
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataStructure\tree.md
@@ -35,6 +35,7 @@
 |无序数	|结点的子树是无序的，可以交换
 |路径	|树中的k个节点n1、n2、...nk，满足ni是n(i+1)的双亲，成为n1到nk的一条路径。就是一条线串下来的，前一个都是后一个父(前驱)节点。
 |森林	|m(m≥0)课不相交的树的集合，对于节点而言，其子树的集合就是森林。
+
 ![](shu.png)
 
 树的特点：
@@ -96,6 +97,9 @@
 节点的权指的是为树中的每一个节点赋予的一个非负的值，如上图中每一个节点中的值。
 
 ### 红黑树
+
 ## 出度树
+
 ### B树
+
 ### B+树
