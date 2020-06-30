@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-23 18:56:23
- * @LastEditTime: 2020-06-24 21:25:30
+ * @LastEditTime: 2020-06-30 21:53:18
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\OperationSystem\MemoryManagement.md
@@ -61,3 +61,49 @@ FIFO的另一个缺点是，它有一种异常现象，即在增加存储块的�
 为了实现 LRU，需要在内存中维护一个所有页面的链表。当一个页面被访问时，将这个页面移到链表表头。这样就能保证链表表尾的页面是最近最久未访问的。
 
 因为每次访问都需要更新链表，因此这种方式实现的 LRU 代价很高。
+```
+class LRUCache{
+private:
+	//LRU数据结构
+	struct Node{
+		int key;
+		int value;
+		Node(int k,int v):key(k),value(v){}
+	};
+public:
+	LRUCache(int c):capacity(c) {}
+	
+	int get(int key){
+		if (cacheMap.find(key) == cacheMap.end())
+			return -1; //这里产生缺页中断，根据页表将页面调入内存，然后set(key, value)
+		//将key移到第一个，并更新cacheMap 
+		cacheList.splice(cacheList.begin(),cacheList,cacheMap[key]);//splice是list的拼接函数
+		cacheMap[key] = cacheList.begin();
+		return cacheMap[key]->value;
+	}
+	void set(int key, int value){
+		if (cacheMap.find(key) == cacheMap.end())
+		{
+			//淘汰最后一个，然后将其加到第一个位置
+			if (cacheList.size() == capacity)
+			{
+				cacheMap.erase(cacheList.back().key);
+				cacheList.pop_back();
+			}
+			cacheList.push_front(Node(key,value));
+			cacheMap[key] = cacheList.begin();
+		} 
+		else
+		{
+			//更新节点的值，并将其加到第一个位置
+			cacheMap[key]->value = value;
+			cacheList.splice(cacheList.begin(),cacheList,cacheMap[key]);
+			cacheMap[key] = cacheList.begin();
+		}
+	}
+private:
+	int capacity;
+	list<Node> cacheList;
+	unordered_map<int, list<Node>::iterator> cacheMap;
+};
+```
