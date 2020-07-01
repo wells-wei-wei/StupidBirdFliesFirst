@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-06-27 23:07:22
+ * @LastEditTime: 2020-07-01 09:22:52
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -48,6 +48,7 @@
   - [U-net](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/MachineLearning/DeepLearning/U-net/U-net.md)
 - 各种命令行命令
   - [git](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/git.md)
+  - [docker](Command/docker.md)
   - [tmux](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/tmux.md)
   - [压缩命令](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/tarzip.md)
   - [OpenposeDemo_in_Windows](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/openposedemo_win.md)
