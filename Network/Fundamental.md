@@ -22,27 +22,27 @@
 
 网络把主机连接起来，而互连网（internet）是把多种不同的网络连接起来，因此互连网是网络的网络。而互联网（Internet）是全球范围的互连网。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/network-of-networks.gif" width="450"/> </div><br>
-
 # ISP
 
-互联网服务提供商 ISP 可以从互联网管理机构获得许多 IP 地址，同时拥有通信线路以及路由器等联网设备，个人或机构向 ISP 缴纳一定的费用就可以接入互联网。
+ISP(internet service provider)译为互联网服务提供商，类似中国电信，中国移动，中国联通就是国内有名的ISP。ISP可以从互联网管理机构申请到很多IP地址，然后一些机构和个人从某个ISP获取IP地址的使用权，并可通过该ISP连接到互联网。ISP可以从互联网管理机构获得许多IP地址，同时拥有通信线路以及路由器等联网设备，个人或机构向 ISP 缴纳一定的费用就可以接入互联网。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/72be01cd-41ae-45f7-99b9-a8d284e44dd4.png" width="500"/> </div><br>
+![](isp.png)
 
-目前的互联网是一种多层次 ISP 结构，ISP 根据覆盖面积的大小分为第一层 ISP、区域 ISP 和接入 ISP。互联网交换点 IXP 允许两个 ISP 直接相连而不用经过第三个 ISP。
+目前的互联网是一种多层次ISP结构，三层ISP结构分为主干ISP，地区ISP，本地ISP。本地ISP给用户提供最直接的服务，本地ISP可以连接到地区ISP，也可以连接到主干ISP。从原理上讲。只要每一个本地ISP都安装了路由器连接到某个地区ISP，而每一个地区ISP也有路由器连接到主干ISP，那么在这些相互连接的ISP的共同作用下，就可以完成互联网中的所有的分组转发任务。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/3be42601-9d33-4d29-8358-a9d16453af93.png" width="500"/> </div><br>
+![](isp2.png)
+
+互联网交换点(IXP)：为了更快地转发分组，IXP允许两个网络直接连接并交换分组，而不需要通过第三个网络来转发分组。例如上图中，主机A和主机B通过2个地区ISP连接起来了，就不必经过最上层的的主干ISP来转发分组。典型的IXP由一个或多个网络交换机组成。
 
 # 主机之间的通信方式
 
 - 客户-服务器（C/S）：客户是服务的请求方，服务器是服务的提供方。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/914894c2-0bc4-46b5-bef9-0316a69ef521.jpg" width="240px"> </div><br>
+![](cs.jpg)
 
 - 对等（P2P）：不区分客户和服务器。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/42430e94-3137-48c0-bdb6-3cebaf9102e3.jpg" width="200px"> </div><br>
+![](p2p.jpg)
 
 # 电路交换与分组交换
 
@@ -60,7 +60,7 @@
 
 总时延 = 排队时延 + 处理时延 + 传输时延 + 传播时延
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/4b2ae78c-e254-44df-9e37-578e2f2bef52.jpg" width="380"/> </div><br>
+![](delay.jpg)
 
 ## 1. 排队时延
 
@@ -74,9 +74,9 @@
 
 主机或路由器传输数据帧所需要的时间。
 
-<!-- <div align="center"><img src="https://latex.codecogs.com/gif.latex?delay=\frac{l(bit)}{v(bit/s)}" class="mathjax-pic"/></div> <br> -->
+<div align="center"><img src="https://latex.codecogs.com/gif.latex?delay=\frac{l(bit)}{v(bit/s)}" class="mathjax-pic"/></div> <br>
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/dcdbb96c-9077-4121-aeb8-743e54ac02a4.png" width="150px"> </div><br>
+<!-- <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/dcdbb96c-9077-4121-aeb8-743e54ac02a4.png" width="150px"> </div><br> -->
 
 
 其中 l 表示数据帧的长度，v 表示传输速率。
@@ -85,15 +85,15 @@
 
 电磁波在信道中传播所需要花费的时间，电磁波传播的速度接近光速。
 
-<!-- <div align="center"><img src="https://latex.codecogs.com/gif.latex?delay=\frac{l(m)}{v(m/s)}" class="mathjax-pic"/></div> <br> -->
+<div align="center"><img src="https://latex.codecogs.com/gif.latex?delay=\frac{l(m)}{v(m/s)}" class="mathjax-pic"/></div> <br>
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/a1616dac-0e12-40b2-827d-9e3f7f0b940d.png" width="150"> </div><br>
+<!-- <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/a1616dac-0e12-40b2-827d-9e3f7f0b940d.png" width="150"> </div><br> -->
 
 其中 l 表示信道长度，v 表示电磁波在信道上的传播速度。
 
 # 计算机网络体系结构
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/0fa6c237-a909-4e2a-a771-2c5485cd8ce0.png" width="450"/> </div><br>
+![](protocal.png)
 
 ## 1. 五层协议
 
@@ -123,8 +123,9 @@
 
 TCP/IP 体系结构不严格遵循 OSI 分层概念，应用层可能会直接使用 IP 层或者网络接口层。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/48d79be8-085b-4862-8a9d-18402eb93b31.png" width="250"/> </div><br>
+![](tcpipprotocal.png)
 
+![](tcpip.gif)
 ## 4. 数据在各层之间的传递过程
 
 在向下的过程中，需要添加下层协议所需要的首部或者尾部，而在向上的过程中不断拆开首部和尾部。

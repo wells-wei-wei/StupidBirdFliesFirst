@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-25 10:05:40
- * @LastEditTime: 2020-06-25 10:05:53
+ * @LastEditTime: 2020-07-03 17:25:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\Network\TransferLayer.md
@@ -25,7 +25,7 @@
 
 # UDP 和 TCP 的特点
 
-- 用户数据报协议 UDP（User Datagram Protocol）是无连接的，尽最大可能交付，没有拥塞控制，面向报文（对于应用程序传下来的报文不合并也不拆分，只是添加 UDP 首部），支持一对一、一对多、多对一和多对多的交互通信。
+- 用户数据报协议 UDP（User Datagram Protocol）是无连接的（使用UDP协议的发送者和接受者之间不必存在任何长期的关系。 它们没有建立连接过程，整个消息传输过程简单来说就是“发送即结束”），尽最大可能交付，没有拥塞控制，面向报文（对于应用程序传下来的报文不合并也不拆分，只是添加UDP首部），支持一对一、一对多、多对一和多对多的交互通信。
 
 - 传输控制协议 TCP（Transmission Control Protocol）是面向连接的，提供可靠交付，有流量控制，拥塞控制，提供全双工通信，面向字节流（把应用层传下来的报文看成字节流，把字节流组织成大小不等的数据块），每一条 TCP 连接只能是点对点的（一对一）。
 
