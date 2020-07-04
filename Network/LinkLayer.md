@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-25 09:58:32
- * @LastEditTime: 2020-06-25 10:00:42
+ * @LastEditTime: 2020-07-04 10:35:57
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\Network\LinkLayer.md
@@ -20,7 +20,7 @@
   - [3. 统计时分复用](#3-统计时分复用)
   - [4. 波分复用](#4-波分复用)
   - [5. 码分复用](#5-码分复用)
-- [CSMA/CD 协议](#csmacd-协议)
+- [CSMA/CD协议](#csmacd协议)
 - [PPP 协议](#ppp-协议)
 - [MAC 地址](#mac-地址)
 - [局域网](#局域网)
@@ -36,19 +36,21 @@
 
 将网络层传下来的分组添加首部和尾部，用于标记帧的开始和结束。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/29a14735-e154-4f60-9a04-c9628e5d09f4.png" width="300"/> </div><br>
+![](baowen.png)
 
 ## 2. 透明传输
 
-透明表示一个实际存在的事物看起来好像不存在一样。
+透明表示一个实际存在的事物看起来好像不存在一样。透明传输是指不管所传数据是什么样的比特组合，都应当能够在链路上传送。 当所传数据中的比特组合恰巧与某一个控制信息完全一样时，就必须采取适当的措施，使接收方不会将这样的数据误认为是某种控制信息。 这样才能保证数据链路层的传输是透明的。
 
 帧使用首部和尾部进行定界，如果帧的数据部分含有和首部尾部相同的内容，那么帧的开始和结束位置就会被错误的判定。需要在数据部分出现首部尾部相同的内容前面插入转义字符。如果数据部分出现转义字符，那么就在转义字符前面再加个转义字符。在接收端进行处理之后可以还原出原始数据。这个过程透明传输的内容是转义字符，用户察觉不到转义字符的存在。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e738a3d2-f42e-4755-ae13-ca23497e7a97.png" width="500"/> </div><br>
+![](toumingchuanshu.png)
 
 ## 3. 差错检测
 
-目前数据链路层广泛使用了循环冗余检验（CRC）来检查比特差错。
+在数据传输过程中，无论传输系统的设计再怎么完美，差错总会存在，这种差错可能会导致在链路上传输的一个或者多个帧被破坏(出现比特差错，0变为1，或者1变为0)，从而接受方接收到错误的数据。为尽量提高接受方收到数据的正确率，在接收方接收数据之前需要对数据进行差错检测，当且仅当检测的结果为正确时接收方才真正收下数据。检测的方式有多种，常见的有奇偶校验、因特网校验和循环冗余校验等。
+
+目前数据链路层广泛使用了循环冗余检验（CRC）来检查比特差错。发送方计算机使用某公式计算出被传送数据所含信息的一个值，并将此值附在被传送数据后，接收方计算机则对同一数据进行相同的计算，应该得到相同的结果。如果这两个CRC结果不一致，则说明发送中出现了差错，接收方计算机可要求发送方计算机重新发送该数据。
 
 # 信道分类
 
@@ -72,21 +74,21 @@
 
 频分复用的所有主机在相同的时间占用不同的频率带宽资源。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/4aa5e057-bc57-4719-ab57-c6fbc861c505.png" width="350"/> </div><br>
+![](pinfenfuyong.png)
 
 ## 2. 时分复用
 
 时分复用的所有主机在不同的时间占用相同的频率带宽资源。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/67582ade-d44a-46a6-8757-3c1296cc1ef9.png" width="350"/> </div><br>
+![](shifenfuyong.png)
 
 使用频分复用和时分复用进行通信，在通信的过程中主机会一直占用一部分信道资源。但是由于计算机数据的突发性质，通信过程没必要一直占用信道资源而不让出给其它用户使用，因此这两种方式对信道的利用率都不高。
 
 ## 3. 统计时分复用
 
-是对时分复用的一种改进，不固定每个用户在时分复用帧中的位置，只要有数据就集中起来组成统计时分复用帧然后发送。
+是对时分复用的一种改进，不固定每个用户在时分复用帧中的位置，只有当用户有数据要传输时才给他分配线路资源，当用户暂停发送数据时，不给他分配线路资源，线路的传输能力可以被其他用户使用。只要有数据就集中起来组成统计时分复用帧然后发送。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/6283be2a-814a-4a10-84bf-9592533fe6bc.png" width="350"/> </div><br>
+![](tongjishifenfuyong.png)
 
 ## 4. 波分复用
 
@@ -96,21 +98,21 @@
 
 为每个用户分配 m bit 的码片，并且所有的码片正交，对于任意两个码片 <img src="https://latex.codecogs.com/gif.latex?\vec{S}" class="mathjax-pic"/> 和 <img src="https://latex.codecogs.com/gif.latex?\vec{T}" class="mathjax-pic"/> 有
 
-<!-- <div align="center"><img src="https://latex.codecogs.com/gif.latex?\frac{1}{m}\vec{S}\cdot\vec{T}=0" class="mathjax-pic"/></div> <br> -->
+<div align="center"><img src="https://latex.codecogs.com/gif.latex?\frac{1}{m}\vec{S}\cdot\vec{T}=0" class="mathjax-pic"/></div> <br>
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/308a02e9-3346-4251-8c41-bd5536dab491.png" width="100px"> </div><br>
+<!-- <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/308a02e9-3346-4251-8c41-bd5536dab491.png" width="100px"> </div><br> -->
 
 为了讨论方便，取 m=8，设码片 <img src="https://latex.codecogs.com/gif.latex?\vec{S}" class="mathjax-pic"/> 为 00011011。在拥有该码片的用户发送比特 1 时就发送该码片，发送比特 0 时就发送该码片的反码 11100100。
 
 在计算时将 00011011 记作 (-1 -1 -1 +1 +1 -1 +1 +1)，可以得到
 
-<!-- <div align="center"><img src="https://latex.codecogs.com/gif.latex?\frac{1}{m}\vec{S}\cdot\vec{S}=1" class="mathjax-pic"/></div> <br> -->
+<div align="center"><img src="https://latex.codecogs.com/gif.latex?\frac{1}{m}\vec{S}\cdot\vec{S}=1" class="mathjax-pic"/></div> <br> 
 
-<!-- <div align="center"><img src="https://latex.codecogs.com/gif.latex?\frac{1}{m}\vec{S}\cdot\vec{S'}=-1" class="mathjax-pic"/></div> <br> -->
+<div align="center"><img src="https://latex.codecogs.com/gif.latex?\frac{1}{m}\vec{S}\cdot\vec{S'}=-1" class="mathjax-pic"/></div> <br>
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/6fda1dc7-5c74-49c1-bb79-237a77e43a43.png" width="100px"> </div><br>
+<!-- <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/6fda1dc7-5c74-49c1-bb79-237a77e43a43.png" width="100px"> </div><br>
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e325a903-f0b1-4fbd-82bf-88913dc2f290.png" width="125px"> </div><br>
+<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e325a903-f0b1-4fbd-82bf-88913dc2f290.png" width="125px"> </div><br> -->
 
 其中 <img src="https://latex.codecogs.com/gif.latex?\vec{S'}" class="mathjax-pic"/> 为 <img src="https://latex.codecogs.com/gif.latex?\vec{S}" class="mathjax-pic"/> 的反码。
 
@@ -121,9 +123,11 @@
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/99b6060e-099d-4201-8e86-f8ab3768a7cf.png" width="500px"> </div><br>
 
 
-# CSMA/CD 协议
+# CSMA/CD协议
 
-CSMA/CD 表示载波监听多点接入 / 碰撞检测。
+CSMA/CD表示载波监听多点接入/碰撞检测，是IEEE 802.3使用的一种媒体访问控制方法。
+
+CSMA/CD的基本原理是：每个节点都共享网络传输信道，在每个站要发送数据之前，都会检测信道是否空闲，如果空闲则发送，否则就等待；在发送出信息后，则对冲突进行检测，当发现冲突时，则取消发送。我们可以借助于生活中的一个例子来解释：假设有这一层楼，两旁住了几十户人，中间只有一条仅供一人同行的走道。我们看情况会怎么样：①当这些住户要经过走道出来时，首先探出头来看看走道上有没有人（这就是载波监听），如果没有，就通过走道出来；②如果走道上有人走，那么就一直盯着走道，直到走道上没人时再出来（1-坚持监听算法）；③如果有两人同时看到走道上没有人，而同时走向走道（冲突检测），则两个人发现时就马上回到自己屋里。在整个协议中最关键的是载波监听、冲突检测两部分。
 
 -   **多点接入**  ：说明这是总线型网络，许多主机以多点的方式连接到总线上。
 -   **载波监听**  ：每个主机都必须不停地监听信道。在发送前，如果监听到信道正在使用，就必须等待。
@@ -133,13 +137,11 @@ CSMA/CD 表示载波监听多点接入 / 碰撞检测。
 
 当发生碰撞时，站点要停止发送，等待一段时间再发送。这个时间采用   **截断二进制指数退避算法**   来确定。从离散的整数集合 {0, 1, .., (2<sup>k</sup>-1)} 中随机取出一个数，记作 r，然后取 r 倍的争用期作为重传等待时间。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/19d423e9-74f7-4c2b-9b97-55890e0d5193.png" width="400"/> </div><br>
+![](csmacd.png)
 
 # PPP 协议
 
-互联网用户通常需要连接到某个 ISP 之后才能接入到互联网，PPP 协议是用户计算机和 ISP 进行通信时所使用的数据链路层协议。
-
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e1ab9f28-cb15-4178-84b2-98aad87f9bc8.jpg" width="300"/> </div><br>
+互联网用户通常需要连接到某个ISP之后才能接入到互联网，PPP 协议是用户计算机和ISP进行通信时所使用的数据链路层协议。
 
 PPP 的帧格式：
 
@@ -148,23 +150,23 @@ PPP 的帧格式：
 - FCS 字段是使用 CRC 的检验序列
 - 信息部分的长度不超过 1500
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/759013d7-61d8-4509-897a-d75af598a236.png" width="400"/> </div><br>
+![](ppp.png)
 
 # MAC 地址
 
-MAC 地址是链路层地址，长度为 6 字节（48 位），用于唯一标识网络适配器（网卡）。
+MAC地址（英语：Media Access Control Address），直译为媒体存取控制位址，也称为局域网地址（LAN Address），MAC位址，以太网地址（Ethernet Address）或物理地址（Physical Address），它是一个用来确认网络设备位置的位址。在OSI模型中，第三层网络层负责IP地址，第二层数据链路层则负责MAC位址。MAC地址用于在网络中唯一标示一个网卡，一台设备若有一或多个网卡，则每个网卡都需要并会有一个唯一的MAC地址
 
-一台主机拥有多少个网络适配器就有多少个 MAC 地址。例如笔记本电脑普遍存在无线网络适配器和有线网络适配器，因此就有两个 MAC 地址。
+MAC地址是链路层地址，长度为6字节（48 位），用于唯一标识网络适配器（网卡）。
 
 # 局域网
 
-局域网是一种典型的广播信道，主要特点是网络为一个单位所拥有，且地理范围和站点数目均有限。
+局域网（Local Area Network，LAN）是一种典型的广播信道，主要特点是网络为一个单位所拥有，且地理范围和站点数目均有限。
 
 主要有以太网、令牌环网、FDDI 和 ATM 等局域网技术，目前以太网占领着有线局域网市场。
 
 可以按照网络拓扑结构对局域网进行分类：
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/807f4258-dba8-4c54-9c3c-a707c7ccffa2.jpg" width="800"/> </div><br>
+![](juyuwang.jpg)
 
 # 以太网
 
@@ -180,7 +182,7 @@ MAC 地址是链路层地址，长度为 6 字节（48 位），用于唯一标�
 -   **数据**  ：长度在 46-1500 之间，如果太小则需要填充；
 -   **FCS**  ：帧检验序列，使用的是 CRC 检验方法；
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/164944d3-bbd2-4bb2-924b-e62199c51b90.png" width="500"/> </div><br>
+![](yitaiwang.png)
 
 # 交换机
 
@@ -188,14 +190,16 @@ MAC 地址是链路层地址，长度为 6 字节（48 位），用于唯一标�
 
 正是由于这种自学习能力，因此交换机是一种即插即用设备，不需要网络管理员手动配置交换表内容。
 
-下图中，交换机有 4 个接口，主机 A 向主机 B 发送数据帧时，交换机把主机 A 到接口 1 的映射写入交换表中。为了发送数据帧到 B，先查交换表，此时没有主机 B 的表项，那么主机 A 就发送广播帧，主机 C 和主机 D 会丢弃该帧，主机 B 回应该帧向主机 A 发送数据包时，交换机查找交换表得到主机 A 映射的接口为 1，就发送数据帧到接口 1，同时交换机添加主机 B 到接口 2 的映射。
+下图中，交换机有4个接口，主机A向主机B发送数据帧时，交换机把主机A到接口1的映射写入交换表中。为了发送数据帧到B，先查交换表，此时没有主机B的表项，那么主机A就发送广播帧，主机C和主机D会丢弃该帧，主机B回应该帧向主机A发送数据包时，交换机查找交换表得到主机A映射的接口为1，就发送数据帧到接口1，同时交换机添加主机B到接口2的映射。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/a4444545-0d68-4015-9a3d-19209dc436b3.png" width="800"/> </div><br>
+![](jiaohaunji.png)
 
 # 虚拟局域网
 
 虚拟局域网可以建立与物理位置无关的逻辑组，只有在同一个虚拟局域网中的成员才会收到链路层广播信息。
 
-例如下图中 (A1, A2, A3, A4) 属于一个虚拟局域网，A1 发送的广播会被 A2、A3、A4 收到，而其它站点收不到。
+例如下图中 (A1, A2, A3, A4) 属于一个虚拟局域网，A1发送的广播会被 A2、A3、A4 收到，而其它站点收不到。
 
 使用 VLAN 干线连接来建立虚拟局域网，每台交换机上的一个特殊接口被设置为干线接口，以互连 VLAN 交换机。IEEE 定义了一种扩展的以太网帧格式 802.1Q，它在标准以太网帧上加进了 4 字节首部 VLAN 标签，用于表示该帧属于哪一个虚拟局域网。
+
+![](vlan.jpg)
