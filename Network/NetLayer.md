@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-25 10:03:18
- * @LastEditTime: 2020-06-25 10:04:35
+ * @LastEditTime: 2020-07-04 18:35:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\Network\NetLayer.md
@@ -14,7 +14,9 @@
   - [2. 子网划分](#2-子网划分)
   - [3. 无分类](#3-无分类)
 - [地址解析协议 ARP](#地址解析协议-arp)
-- [网际控制报文协议 ICMP](#网际控制报文协议-icmp)
+  - [有了MAC地址为什么还需要IP地址？](#有了mac地址为什么还需要ip地址)
+  - [有了IP地址为什么还需要MAC地址？](#有了ip地址为什么还需要mac地址)
+- [网际控制报文协议ICMP](#网际控制报文协议icmp)
   - [1. Ping](#1-ping)
   - [2. Traceroute](#2-traceroute)
 - [虚拟专用网 VPN](#虚拟专用网-vpn)
@@ -32,9 +34,9 @@
 
 因为网络层是整个互联网的核心，因此应当让网络层尽可能简单。网络层向上只提供简单灵活的、无连接的、尽最大努力交互的数据报服务。
 
-使用 IP 协议，可以把异构的物理网络连接起来，使得在网络层看起来好像是一个统一的网络。
+使用IP协议，可以把异构的物理网络连接起来，使得在网络层看起来好像是一个统一的网络。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/8d779ab7-ffcc-47c6-90ec-ede8260b2368.png" width="800"/> </div><br>
+![](ip.png)
 
 与 IP 协议配套使用的还有三个协议：
 
@@ -44,7 +46,7 @@
 
 # IP 数据报格式
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/85c05fb1-5546-4c50-9221-21f231cdc8c5.jpg" width="700"/> </div><br>
+![](ipbaowen.jpg)
 
 -   **版本**   : 有 4（IPv4）和 6（IPv6）两个值；
 
@@ -64,7 +66,7 @@
 
 -   **片偏移**   : 和标识符一起，用于发生分片的情况。片偏移的单位为 8 字节。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/23ba890e-e11c-45e2-a20c-64d217f83430.png" width="700"/> </div><br>
+![](shujubaofenpian.png)
 
 # IP 地址编址方式
 
@@ -80,7 +82,7 @@ IP 地址的编址方式经历了三个历史阶段：
 
 IP 地址 ::= {< 网络号 >, < 主机号 >}
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/cbf50eb8-22b4-4528-a2e7-d187143d57f7.png" width="500"/> </div><br>
+![](ipfenlei.png)
 
 ## 2. 子网划分
 
@@ -110,27 +112,37 @@ CIDR 的地址掩码可以继续称为子网掩码，子网掩码首 1 长度为
 
 网络层实现主机之间的通信，而链路层实现具体每段链路之间的通信。因此在通信过程中，IP 数据报的源地址和目的地址始终不变，而 MAC 地址随着链路的改变而改变。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/66192382-558b-4b05-a35d-ac4a2b1a9811.jpg" width="700"/> </div><br>
+<!-- <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/66192382-558b-4b05-a35d-ac4a2b1a9811.jpg" width="700"/> </div><br> -->
 
 ARP 实现由 IP 地址得到 MAC 地址。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/b9d79a5a-e7af-499b-b989-f10483e71b8b.jpg" width="500"/> </div><br>
+![](arp.jpg)
 
 每个主机都有一个 ARP 高速缓存，里面有本局域网上的各主机和路由器的 IP 地址到 MAC 地址的映射表。
 
-如果主机 A 知道主机 B 的 IP 地址，但是 ARP 高速缓存中没有该 IP 地址到 MAC 地址的映射，此时主机 A 通过广播的方式发送 ARP 请求分组，主机 B 收到该请求后会发送 ARP 响应分组给主机 A 告知其 MAC 地址，随后主机 A 向其高速缓存中写入主机 B 的 IP 地址到 MAC 地址的映射。
+如果主机A知道主机B的 IP 地址，但是ARP高速缓存中没有该IP地址到MAC地址的映射，此时主机A通过广播的方式发送ARP请求分组，主机B收到该请求后会发送ARP响应分组给主机A告知其MAC地址，随后主机A向其高速缓存中写入主机B的IP地址到MAC地址的映射。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/8006a450-6c2f-498c-a928-c927f758b1d0.png" width="700"/> </div><br>
+![](arpyuanli.png)
 
-# 网际控制报文协议 ICMP
+## 有了MAC地址为什么还需要IP地址？
 
-ICMP 是为了更有效地转发 IP 数据报和提高交付成功的机会。它封装在 IP 数据报中，但是不属于高层协议。
+由于全世界存在着各式各样的网络，它们使用不同的硬件地址。要是这些异构网络能够互相通信就必须进行非常复杂的硬件地址转换工作，因此由用户或用户主机来完成这项工作几乎是不可能的事。但统一的IP地址把这个复杂问题解决了。连接到因特网的主机只需拥有统一的IP地址，它们之间的通信就像连接在同一个网络（虚拟互连网络或者简称IP网）上那么简单方便，因为调用ARP的复杂过程都是由计算机软件自动进行的，对用户来说是看不见这种调用过程的。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e3124763-f75e-46c3-ba82-341e6c98d862.jpg" width="500"/> </div><br>
+## 有了IP地址为什么还需要MAC地址？
+
+a.信息传递时候，需要知道的其实是两个地址：终点地址、下一跳的地址。IP地址本质上是终点地址，它在跳过路由器的时候不会改变，而MAC地址则是下一跳的地址，每跳过一次路由器都会改变。这就是为什么还要用MAC地址的原因之一，它起到了记录下一跳的信息的作用。 
+b.网络体系结构的分层模型：用MAC地址和IP地址两个地址，用于分别表示物理地址和逻辑地址是有好处的。这样分层可以使网络层与数据链路层的协议更灵活地替换。 
+c.历史原因：早期的以太网只有集线器，没有交换机，所以发出去的包能被以太网内的所有机器监听到，因此要附带上MAC地址，每个机器只需要接受与自己MAC地址相匹配的包。
+
+# 网际控制报文协议ICMP
+
+ICMP协议主要用来检测网络通信故障和实现链路追踪，最典型的应用就是PING和tracerooute。ICMP是为了更有效地转发IP数据报和提高交付成功的机会。它封装在IP数据报中，但是不属于高层协议。
+
+![](icmp.jpg)
 
 ICMP 报文分为差错报告报文和询问报文。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/aa29cc88-7256-4399-8c7f-3cf4a6489559.png" width="600"/> </div><br>
+![](icmpleixing.png)
 
 ## 1. Ping
 
@@ -151,7 +163,7 @@ Traceroute 发送的 IP 数据报封装的是无法交付的 UDP 用户数据报
 
 # 虚拟专用网 VPN
 
-由于 IP 地址的紧缺，一个机构能申请到的 IP 地址数往往远小于本机构所拥有的主机数。并且一个机构并不需要把所有的主机接入到外部的互联网中，机构内的计算机可以使用仅在本机构有效的 IP 地址（专用地址）。
+由于IP地址的紧缺，一个机构能申请到的IP地址数往往远小于本机构所拥有的主机数。并且一个机构并不需要把所有的主机接入到外部的互联网中，机构内的计算机可以使用仅在本机构有效的IP地址（专用地址）。
 
 有三个专用地址块：
 
@@ -159,9 +171,9 @@ Traceroute 发送的 IP 数据报封装的是无法交付的 UDP 用户数据报
 - 172.16.0.0 \~ 172.31.255.255
 - 192.168.0.0 \~ 192.168.255.255
 
-VPN 使用公用的互联网作为本机构各专用网之间的通信载体。专用指机构内的主机只与本机构内的其它主机通信；虚拟指好像是，而实际上并不是，它有经过公用的互联网。
+VPN使用公用的互联网作为本机构各专用网之间的通信载体。专用指机构内的主机只与本机构内的其它主机通信；虚拟指好像是，而实际上并不是，它有经过公用的互联网。
 
-下图中，场所 A 和 B 的通信经过互联网，如果场所 A 的主机 X 要和另一个场所 B 的主机 Y 通信，IP 数据报的源地址是 10.1.0.1，目的地址是 10.2.0.3。数据报先发送到与互联网相连的路由器 R1，R1 对内部数据进行加密，然后重新加上数据报的首部，源地址是路由器 R1 的全球地址 125.1.2.3，目的地址是路由器 R2 的全球地址 194.4.5.6。路由器 R2 收到数据报后将数据部分进行解密，恢复原来的数据报，此时目的地址为 10.2.0.3，就交付给 Y。
+下图中，场所A和B的通信经过互联网，如果场所A的主机X要和另一个场所B的主机Y通信，IP数据报的源地址是10.1.0.1，目的地址是10.2.0.3。数据报先发送到与互联网相连的路由器R1，R1对内部数据进行加密，然后重新加上数据报的首部，源地址是路由器R1的全球地址125.1.2.3，目的地址是路由器 R2 的全球地址 194.4.5.6。路由器R2收到数据报后将数据部分进行解密，恢复原来的数据报，此时目的地址为10.2.0.3，就交付给Y。
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/1556770b-8c01-4681-af10-46f1df69202c.jpg" width="800"/> </div><br>
 
