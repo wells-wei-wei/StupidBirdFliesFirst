@@ -1,11 +1,20 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-25 09:56:07
- * @LastEditTime: 2020-07-06 19:45:43
- * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2020-07-10 23:29:55
+ * @LastEditors: your name
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\Network\PhysicalLayer.md
 --> 
+<!-- TOC -->
+
+- [物理层](#物理层)
+  - [中继器](#中继器)
+  - [曼彻斯特编码](#曼彻斯特编码)
+  - [带通调制](#带通调制)
+
+<!-- /TOC -->
+
 # 物理层
 
 根据信息在传输线上的传送方向，分为以下三种通信方式：

@@ -6,6 +6,22 @@
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\OperationSystem\MemoryManagement.md
 --> 
+
+<!-- TOC -->
+
+- [内存管理](#内存管理)
+  - [内存的组成](#内存的组成)
+  - [内存管理](#内存管理-1)
+  - [虚拟内存](#虚拟内存)
+  - [分页内存](#分页内存)
+  - [分页系统地址映射](#分页系统地址映射)
+  - [页面置换算法](#页面置换算法)
+    - [OPT, Optimal replacement algorithm](#opt-optimal-replacement-algorithm)
+    - [先进先出置换算法（FIFO）](#先进先出置换算法fifo)
+    - [LRU, Least Recently Used](#lru-least-recently-used)
+
+<!-- /TOC -->
+
 # 内存管理
 内存管理是指软件运行时对计算机内存资源的分配和使用的技术。其最主要的目的是如何高效，快速的分配，并且在适当的时候释放和回收内存资源。
 

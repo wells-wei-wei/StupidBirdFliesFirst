@@ -6,6 +6,23 @@
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataStructure\tree.md
 --> 
+
+<!-- TOC -->
+
+- [树](#树)
+  - [二叉树](#二叉树)
+    - [斜二叉树](#斜二叉树)
+    - [完美二叉树](#完美二叉树)
+    - [完全二叉树](#完全二叉树)
+    - [二叉搜索树](#二叉搜索树)
+    - [堆](#堆)
+    - [霍夫曼树](#霍夫曼树)
+    - [红黑树](#红黑树)
+  - [出度树](#出度树)
+    - [B树 B+树](#b树-b树)
+
+<!-- /TOC -->
+
 # 树
 树在数据结构中属于一种非线性结构，每个元素可以有多个前驱和后继，它有如下定义：
 树是n(n≥0)个元素的集合：

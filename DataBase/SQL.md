@@ -1,11 +1,14 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-02 18:57:30
- * @LastEditTime: 2020-06-18 20:30:45
+ * @LastEditTime: 2020-07-10 23:26:45
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataBase\MySQL.md
 --> 
+
+
+
 # SQL基本语句
 参考书目：
 - 《MySQL必知必会》
@@ -13,8 +16,7 @@
 ## 数据库基础
 &emsp;&emsp;数据库是一种以某种有组织的方式存储的数据集合。再简单一点，保存有组织的数据的容器
 
-###
- 表
+### 表
 &emsp;&emsp;每一条数据都存在一个文件中，这个文件在数据库领域中称为表。这是一种结构化的文件，可以用来存储特定类型的数据。通俗点来说，就像是excel里的表格。
 
 &emsp;&emsp;表只能存放一类数据，不应该将不同的数据放在一个表中存储。

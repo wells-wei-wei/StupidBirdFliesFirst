@@ -1,13 +1,28 @@
 <!--
  * @Author: your name
  * @Date: 2020-06-15 19:36:05
- * @LastEditTime: 2020-06-19 22:47:49
+ * @LastEditTime: 2020-07-10 23:27:21
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataStructure\DataStructure.md
 --> 
 
 ![](datastructure.png)
+
+<!-- TOC -->
+
+- [线性表](#线性表)
+  - [数组](#数组)
+  - [链表](#链表)
+  - [数组和链表的区别](#数组和链表的区别)
+  - [队列](#队列)
+  - [队列的数组实现](#队列的数组实现)
+  - [队列的链表实现](#队列的链表实现)
+  - [栈](#栈)
+  - [栈的数组实现](#栈的数组实现)
+  - [栈的链表实现](#栈的链表实现)
+
+<!-- /TOC -->
 
 # 线性表
 线性表就是n个具有相同特性的数据元素的有限序列。

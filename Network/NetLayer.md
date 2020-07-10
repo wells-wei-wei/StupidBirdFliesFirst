@@ -1,12 +1,5 @@
-<!--
- * @Author: your name
- * @Date: 2020-06-25 10:03:18
- * @LastEditTime: 2020-07-06 19:50:13
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \StupidBirdFliesFirst\Network\NetLayer.md
---> 
-<!-- GFM-TOC -->
+<!-- TOC -->
+
 - [概述](#概述)
 - [IP 数据报格式](#ip-数据报格式)
 - [IP 地址编址方式](#ip-地址编址方式)
@@ -29,7 +22,8 @@
   - [1. 内部网关协议RIP](#1-内部网关协议rip)
   - [2. 内部网关协议OSPF](#2-内部网关协议ospf)
   - [3. 外部网关协议BGP](#3-外部网关协议bgp)
-<!-- GFM-TOC -->
+
+<!-- /TOC -->
 
 
 # 概述

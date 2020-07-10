@@ -1,12 +1,5 @@
-<!--
- * @Author: your name
- * @Date: 2020-06-25 09:58:32
- * @LastEditTime: 2020-07-04 10:35:57
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \StupidBirdFliesFirst\Network\LinkLayer.md
---> 
-<!-- GFM-TOC -->
+<!-- TOC -->
+
 - [基本问题](#基本问题)
   - [1. 封装成帧](#1-封装成帧)
   - [2. 透明传输](#2-透明传输)
@@ -27,7 +20,8 @@
 - [以太网](#以太网)
 - [交换机](#交换机)
 - [虚拟局域网](#虚拟局域网)
-<!-- GFM-TOC -->
+
+<!-- /TOC -->
 
 
 # 基本问题

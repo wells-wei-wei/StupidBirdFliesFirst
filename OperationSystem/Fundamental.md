@@ -6,6 +6,23 @@
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\OperationSystem\Fundamental.md
 --> 
+
+<!-- TOC -->
+
+- [基本概念](#基本概念)
+  - [并发和并行](#并发和并行)
+  - [用户态和内核态](#用户态和内核态)
+    - [系统调用](#系统调用)
+    - [库函数](#库函数)
+    - [shell](#shell)
+    - [用户态到内核态的切换](#用户态到内核态的切换)
+  - [中断、异常和陷阱](#中断异常和陷阱)
+    - [中断](#中断)
+    - [异常](#异常)
+    - [陷阱](#陷阱)
+
+<!-- /TOC -->
+
 # 基本概念
 ## 并发和并行
 并发是指宏观上在一段时间内能同时运行多个程序，而并行则指同一时刻能运行多个指令。

@@ -6,6 +6,26 @@
  * @Description: In User Settings Edit
  * @FilePath: \undefinedc:\Users\conan\Desktop\LongTime\StupidBirdFliesFirst\DataBase\index.md
 --> 
+
+<!-- TOC -->
+
+- [索引](#索引)
+  - [分类](#分类)
+    - [从数据结构分类](#从数据结构分类)
+    - [物理存储角度](#物理存储角度)
+    - [逻辑角度](#逻辑角度)
+  - [B树](#b树)
+    - [平衡二叉树](#平衡二叉树)
+    - [B树](#b树-1)
+      - [B树的插入操作](#b树的插入操作)
+      - [B树的删除操作](#b树的删除操作)
+  - [B+树](#b树-2)
+    - [B+树的插入操作](#b树的插入操作-1)
+    - [B+树的删除操作](#b树的删除操作-1)
+  - [不同数据库的不同选择](#不同数据库的不同选择)
+
+<!-- /TOC -->
+
 # 索引
 
 ## 分类

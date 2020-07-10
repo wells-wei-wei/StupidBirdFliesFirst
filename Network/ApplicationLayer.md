@@ -1,13 +1,5 @@
-<!--
- * @Author: your name
- * @Date: 2020-06-25 10:07:11
- * @LastEditTime: 2020-07-06 19:54:02
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \StupidBirdFliesFirst\Network\ApplicationLayer.md
---> 
+<!-- TOC -->
 
-<!-- GFM-TOC -->
 - [域名系统](#域名系统)
 - [文件传送协议](#文件传送协议)
 - [IP地址](#ip地址)
@@ -25,8 +17,8 @@
   - [2. ARP解析MAC地址](#2-arp解析mac地址)
   - [3. DNS 解析域名](#3-dns-解析域名)
   - [4. HTTP请求页面](#4-http请求页面)
-<!-- GFM-TOC -->
 
+<!-- /TOC -->
 
 # 域名系统
 
