@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-07-10 23:06:48
+ * @LastEditTime: 2020-07-11 21:20:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -348,6 +348,8 @@ C++11也可以直接使用大括号赋值（看上去就像上面的方法省略
 
 鉴于char[]（来自C）运用起来比较麻烦，一般还是会用string类（来自c++），而且赋值、拼接等操作都更加直接。（char需要strcat等命令）
 
+字符串所占的空间可以用sizeof进行检测，strlen检测出的是目前有几个字符。
+
 ### 其他形式的字符串
 ```
 wchar_t title[]=L"wells";
@@ -365,6 +367,13 @@ cout<<R"(hello,"Bob".)"<<endl; //打印hello,"Bob".
 cout<<R"+*("(Who is it?)")+*"<<endl;//打印"(Who is it?)"
 ```
 自定义定界符的方法就是在"和(之间添加字符，当然在末尾的定界符应保持一致。以上例子自定义的定界符是"+\*(，则末尾定界符是)+\*"。自定义定界符时，在默认定界符之间添加任意数量的基本字符，但空格，左括号，右括号，斜杠和控制字符等除外。
+
+C风格的字符串一般有两种初始化的方式：
+```
+char *p1 = "123";
+char p2[3]="123";
+```
+这两种从表现上来说是相同的，但实际上第一种是规定了一个指向常量字符串的指针，这时这个常量字符串依然存在常量区，是不能做任何修改的（就像const），但是第二种就是新建了一个数组，并在结尾自动加上了界定符，这时是可以针对其进行修改的。
 
 ## 结构
 &emsp;&emsp;结构是C++中类的基石
