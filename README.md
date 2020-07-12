@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-07-01 09:22:52
+ * @LastEditTime: 2020-07-12 19:26:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -32,6 +32,7 @@
   - [基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/Fundamental.md)
   - [进程管理](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/ProcessManagement.md)
   - [内存管理](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/MemoryManagement.md)
+  - [Linux](OperationSystem/linux.md)
 - 数据库
   - [基本知识](DataBase/Fundamental.md)
   - [MySQL](DataBase/MySQL.md)

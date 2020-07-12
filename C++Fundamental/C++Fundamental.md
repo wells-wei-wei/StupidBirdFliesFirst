@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-04 21:58:09
- * @LastEditTime: 2020-07-11 21:20:55
+ * @LastEditTime: 2020-07-12 19:44:05
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\C++Fundamental\C++Fundamental.md
@@ -189,7 +189,7 @@
    ```
    gcc hello.o -o hello
    ```
-   库分为动态链接库和静态链接库两种：
+   库的打包使用ar命令，分为动态链接库和静态链接库两种：
    - 静态库是在链接过程中把库文件全部加入到可执行文件中，在运行时就不再需要库文件了，后缀为.a
    - 动态库在编译链接时并没有把全部代码都加入到可执行文件中去，在程序执行时再加载库，后缀为.so
 
