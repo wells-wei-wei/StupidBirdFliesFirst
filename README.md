@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-07-12 19:26:40
+ * @LastEditTime: 2020-07-15 20:23:08
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \StupidBirdFliesFirst\README.md
@@ -12,6 +12,7 @@
 公式无法显示的可以尝试下载chrome插件[MathJax Plugin for Github](https://chrome.google.com/webstore/detail/mathjax-plugin-for-github/ioemnmodlmafdkllaclgeombjnmnbima/related)
 - C++
   - [C++基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/C%2B%2BFundamental.md)
+  - [C++11新特性](C++Fundamental/c++11.md)
   - [Cmake](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/cmake.md)
 - 数据结构
   - [线性表](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataStructure/LinearTable.md)
@@ -27,7 +28,7 @@
   - [网络层](Network/NetLayer.md)
   - [传输层](Network/TransferLayer.md)
   - [应用层](Network/ApplicationLayer.md)
-  - [TCP的三次握手和四次挥手](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Network/TCPConnect.md)
+  - [TCP的三次握手和四次挥手](Network/TCPConnect.md)
 - 操作系统
   - [基础知识](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/Fundamental.md)
   - [进程管理](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/OperationSystem/ProcessManagement.md)
