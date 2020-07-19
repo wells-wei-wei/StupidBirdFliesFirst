@@ -143,6 +143,13 @@ LIMIT 5，15
 ```
 表示返回从第5行开始的15行（从第0行开始）。如果超出了总行数不会报错，有多少行返回多少行
 
+```
+SELECT name 
+FROM wells
+limit 2 offset 1
+```
+表示从第1条（不包括）数据开始取出2条数据，limit后面跟的是2条数据，offset后面是从第1条开始读取，即读取第2,3条
+
 #### 使用完全限定的表名
 ```
 SELECT wells.name 
@@ -260,6 +267,31 @@ FROM wells
 WHERE id NOT IN (1,2,3)
 ```
 就是把id不等于1，2和3的行都挑出来
+
+#### case when
+case的用法就很像，用途就是对某一列进行条件选择。case具有两种格式。简单case函数和case搜索函数：
+```
+--简单case函数
+case sex
+  when '1' then '男'
+  when '2' then '女’
+  else '其他' end
+--case搜索函数
+case when sex = '1' then '男'
+     when sex = '2' then '女'
+     else '其他' end  
+```
+这两种方式，可以实现相同的功能。简单case函数的写法相对比较简洁，但是和case搜索函数相比，功能方面会有些限制，比如写判定式。
+
+还有一个需要注重的问题，case函数只返回第一个符合条件的值，剩下的case部分将会被自动忽略：
+```
+--比如说，下面这段sql，你永远无法得到“第二类”这个结果
+case when col_1 in ('a','b') then '第一类'
+     when col_1 in ('a') then '第二类'
+     else '其他' end  
+```
+
+另外case when在使用的时候有一点问题，如果只写一个条件没写else，那就是默认else的情况下会输出null，这时候就比较麻烦，比如leetcode 1179，这时如果在月份的条件那里只写CASE `month` WHEN 'Feb' THEN revenue END as Feb_Revenue的话，就会不止检测month列是Feb的情况，其他月份也会挨个检测，然后直接输出null，这种时候还没有被分组，就已经生成了针对每一行的Feb_Revenue列，然后再进行分组的话，就只会取得每个id第一次出现的数值，所以就会出错。而聚合函数（sum或者max）是在分组后进行计算的，因此需要一个聚合函数来保证它在分组后只输出一个数。
 
 ### 通配符过滤
 &emsp;&emsp;在搜索子句中使用通配符，必须使用LIKE操作符。LIKE指示MySQL，后跟的搜索模式利用通配符匹配而不是直接相等匹配进行比较。
