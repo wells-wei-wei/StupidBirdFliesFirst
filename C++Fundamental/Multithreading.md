@@ -163,7 +163,7 @@ void f()
 代码使用了try/catch块确保访问本地状态的线程退出后，函数才结束。当函数正常退出时，会执行到②处；当函数执行过程中抛出异常，程序会执行到①处。try/catch块能轻易的捕获轻量级错误，所以这种情况，并非放之四海而皆准。
 
 一种方式是使用“资源获取即初始化方式”(RAII，Resource Acquisition Is Initialization)，并且提供一个类，在析构函数中使用join()，如同下面清单中的代码。看它如何简化f()函数。
-```
+```c++
 class thread_guard
 {
   std::thread& t;
@@ -307,7 +307,7 @@ t3使用默认构造方式创建④，与任何执行线程都没有关联。调
 
 最后一个移动操作，将some_function线程的所有权转移⑥给t1。不过，t1已经有了一个关联的线程(执行some_other_function的线程)，所以这里系统直接调用std::terminate()终止程序继续运行。这样做（不抛出异常，std::terminate()是noexcept函数)是为了保证与std::thread的析构函数的行为一致。
 
-std::thread支持移动的好处是可以创建thread_guard类的实例(定义见 清单2.3)，并且拥有其线程的所有权。当thread_guard对象所持有的线程已经被引用，移动操作就可以避免很多不必要的麻烦；这意味着，当某个对象转移了线程的所有权后，它就不能对线程进行加入或分离。为了确保线程程序退出前完成，下面的代码里定义了scoped_thread类。现在，我们来看一下这段代码：
+std::thread支持移动，因此在thread_guard中可能会产生一些问题，当thread_guard对象所持有的线程已经被转移了线程的所有权后，thread_guard就不能对线程进行加入或分离。为了确保线程程序退出前完成，下面的代码里定义了scoped_thread类。现在，我们来看一下这段代码：
 ```c++
 class scoped_thread
 {
@@ -353,3 +353,135 @@ void f()
                   std::mem_fn(&std::thread::join)); // 对每个线程调用join()
 }
 ```
+我们经常需要线程去分割一个算法的总工作量，所以在算法结束的之前，所有的线程必须结束。清单2.7说明线程所做的工作都是独立的，并且结果仅会受到共享数据的影响。如果f()有返回值，这个返回值就依赖于线程得到的结果。在写入返回值之前，程序会检查使用共享数据的线程是否终止。操作结果在不同线程中转移的替代方案，我们会在第4章中再次讨论。
+
+将std::thread放入std::vector是向线程自动化管理迈出的第一步：并非为这些线程创建独立的变量，并且将他们直接加入，可以把它们当做一个组。创建一组线程(数量在运行时确定)，可使得这一步迈的更大，而非像清单2.7那样创建固定数量的线程。
+
+## 运行时决定线程数量
+std::thread::hardware_concurrency()在新版C++标准库中是一个很有用的函数。这个函数将返回能同时并发在一个程序中的线程数量。例如，多核系统中，返回值可以是CPU核芯的数量。返回值也仅仅是一个提示，当系统信息无法获取时，函数也会返回0。
+
+以下程序实现了一个并行版的std::accumulate（累加求和）。代码中将整体工作拆分成小任务交给每个线程去做，其中设置最小任务数，是为了避免产生太多的线程。程序可能会在操作数量为0的时候抛出异常。比如，std::thread构造函数无法启动一个执行线程，就会抛出一个异常：
+```c++
+template<typename Iterator,typename T>
+struct accumulate_block
+{
+  void operator()(Iterator first,Iterator last,T& result)
+  {
+    result=std::accumulate(first,last,result);
+  }
+};
+
+template<typename Iterator,typename T>
+T parallel_accumulate(Iterator first,Iterator last,T init)
+{
+  unsigned long const length=std::distance(first,last);
+
+  if(!length) // 1
+    return init;
+
+  unsigned long const min_per_thread=25;
+  unsigned long const max_threads=
+      (length+min_per_thread-1)/min_per_thread; // 2
+
+  unsigned long const hardware_threads=
+      std::thread::hardware_concurrency();
+
+  unsigned long const num_threads=  // 3
+      std::min(hardware_threads != 0 ? hardware_threads : 2, max_threads);
+
+  unsigned long const block_size=length/num_threads; // 4
+
+  std::vector<T> results(num_threads);
+  std::vector<std::thread> threads(num_threads-1);  // 5
+
+  Iterator block_start=first;
+  for(unsigned long i=0; i < (num_threads-1); ++i)
+  {
+    Iterator block_end=block_start;
+    std::advance(block_end,block_size);  // 6
+    threads[i]=std::thread(     // 7
+        accumulate_block<Iterator,T>(),
+        block_start,block_end,std::ref(results[i]));
+    block_start=block_end;  // 8
+  }
+  accumulate_block<Iterator,T>()(
+      block_start,last,results[num_threads-1]); // 9
+  std::for_each(threads.begin(),threads.end(),
+       std::mem_fn(&std::thread::join));  // 10
+
+  return std::accumulate(results.begin(),results.end(),init); // 11
+}
+```
+函数看起来很长，但不复杂。如果输入的范围为空①，就会得到init的值。反之，如果范围内多于一个元素时，都需要用范围内元素的总数量除以线程(块)中最小任务数，从而确定启动线程的最大数量②，这样能避免无谓的计算资源的浪费。比如，一台32芯的机器上，只有5个数需要计算，却启动了32个线程。
+
+计算量的最大值和硬件支持线程数中，较小的值为启动线程的数量③。因为上下文频繁的切换会降低线程的性能，所以你肯定不想启动的线程数多于硬件支持的线程数量。当std::thread::hardware_concurrency()返回0，你可以选择一个合适的数作为你的选择；在本例中,我选择了"2"。你也不想在一台单核机器上启动太多的线程，因为这样反而会降低性能，有可能最终让你放弃使用并发。
+
+每个线程中处理的元素数量,是范围中元素的总量除以线程的个数得出的④。对于分配是否得当，我们会在后面讨论。
+
+现在，确定了线程个数，通过创建一个std::vector<T>容器存放中间结果，并为线程创建一个std::vector<std::thread>容器⑤。这里需要注意的是，启动的线程数必须比num_threads少1个，因为在启动之前已经有了一个线程(主线程)。
+
+使用简单的循环来启动线程：block_end迭代器指向当前块的末尾⑥，并启动一个新线程为当前块累加结果⑦。当迭代器指向当前块的末尾时，启动下一个块⑧。
+
+启动所有线程后，⑨中的线程会处理最终块的结果。对于分配不均，因为知道最终块是哪一个，那么这个块中有多少个元素就无所谓了。
+
+当累加最终块的结果后，可以等待std::for_each⑩创建线程的完成(如同在清单2.7中做的那样)，之后使用std::accumulate将所有结果进行累加⑪。
+
+结束这个例子之前，需要明确：T类型的加法运算不满足结合律(比如，对于float型或double型，在进行加法操作时，系统很可能会做截断操作)，因为对范围中元素的分组，会导致parallel_accumulate得到的结果可能与std::accumulate得到的结果不同。同样的，这里对迭代器的要求更加严格：必须都是向前迭代器，而std::accumulate可以在只传入迭代器的情况下工作。对于创建出results容器，需要保证T有默认构造函数。对于算法并行，通常都要这样的修改；不过，需要根据算法本身的特性，选择不同的并行方式。算法并行会在第8章有更加深入的讨论。需要注意的：因为不能直接从一个线程中返回一个值，所以需要传递results容器的引用到线程中去。另一个办法，通过地址来获取线程执行的结果；第4章中，我们将使用期望(futures)完成这种方案。
+
+当线程运行时，所有必要的信息都需要传入到线程中去，包括存储计算结果的位置。不过，并非总需如此：有时候这是识别线程的可行方案，可以传递一个标识数，例如清单2.7中的i。不过，当需要标识的函数在调用栈的深层，同时其他线程也可调用该函数，那么标识数就会变的捉襟见肘。好消息是在设计C++的线程库时，就有预见了这种情况，在之后的实现中就给每个线程附加了唯一标识符。
+
+## 识别线程
+线程标识类型是std::thread::id，可以通过两种方式进行检索。第一种，可以通过调用std::thread对象的成员函数get_id()来直接获取。如果std::thread对象没有与任何执行线程相关联，get_id()将返回std::thread::type默认构造值，这个值表示“没有线程”。第二种，当前线程中调用std::this_thread::get_id()(这个函数定义在\<thread\>头文件中)也可以获得线程标识。
+
+std::thread::id对象可以自由的拷贝和对比,因为标识符就可以复用。如果两个对象的std::thread::id相等，那它们就是同一个线程，或者都“没有线程”。如果不等，那么就代表了两个不同线程，或者一个有线程，另一没有。
+
+线程库不会限制你去检查线程标识是否一样，std::thread::id类型对象提供相当丰富的对比操作；比如，提供为不同的值进行排序。这意味着允许程序员将其当做为容器的键值，做排序，或做其他方式的比较。按默认顺序比较不同值的std::thread::id，所以这个行为可预见的：当a<b，b<c时，得a<c，等等。标准库也提供std::hash<std::thread::id>容器，所以std::thread::id也可以作为无序容器的键值。
+
+std::thread::id实例常用作检测线程是否需要进行一些操作，比如：当用线程来分割一项工作(如下)，主线程可能要做一些与其他线程不同的工作。这种情况下，启动其他线程前，它可以将自己的线程ID通过std::this_thread::get_id()得到，并进行存储。就是算法核心部分(所有线程都一样的),每个线程都要检查一下，其拥有的线程ID是否与初始线程的ID相同。
+```c++
+std::thread::id master_thread;
+void some_core_part_of_algorithm()
+{
+  if(std::this_thread::get_id()==master_thread)
+  {
+    do_master_thread_work();
+  }
+  do_common_work();
+}
+```
+另外，当前线程的std::thread::id将存储到一个数据结构中。之后在这个结构体中对当前线程的ID与存储的线程ID做对比，来决定操作是被“允许”，还是“需要”(permitted/required)。
+
+同样，作为线程和本地存储不适配的替代方案，线程ID在容器中可作为键值。例如，容器可以存储其掌控下每个线程的信息，或在多个线程中互传信息。
+
+std::thread::id可以作为一个线程的通用标识符，当标识符只与语义相关(比如，数组的索引)时，就需要这个方案了。也可以使用输出流(std::cout)来记录一个std::thread::id对象的值。
+```c++
+std::cout<<std::this_thread::get_id();
+```
+具体的输出结果是严格依赖于具体实现的，C++标准的唯一要求就是要保证ID比较结果相等的线程，必须有相同的输出。
+
+# 共享数据
+当线程在访问共享数据的时候，必须定一些规矩，用来限定线程可访问的数据位。还有，一个线程更新了共享数据，需要对其他线程进行通知。从易用性的角度，同一进程中的多个线程进行数据共享，有利有弊。错误的共享数据使用是产生并发bug的一个主要原因
+
+## C++中使用互斥量
+C++中通过实例化std::mutex创建互斥量，通过调用成员函数lock()进行上锁，unlock()进行解锁。不过，不推荐实践中直接去调用成员函数，因为调用成员函数就意味着，必须记住在每个函数出口都要去调用unlock()，也包括异常的情况。C++标准库为互斥量提供了一个RAII语法的模板类std::lock_guard，其会在构造的时候提供已锁的互斥量，并在析构的时候进行解锁，从而保证了一个已锁的互斥量总是会被正确的解锁。下面的程序清单中，展示了如何在多线程程序中，使用std::mutex构造的std::lock_guard实例，对一个列表进行访问保护。std::mutex和std::lock_guard都在<mutex>头文件中声明。
+```c++
+#include <list>
+#include <mutex>
+#include <algorithm>
+
+std::list<int> some_list;    // 1
+std::mutex some_mutex;    // 2
+
+void add_to_list(int new_value)
+{
+  std::lock_guard<std::mutex> guard(some_mutex);    // 3
+  some_list.push_back(new_value);
+}
+
+bool list_contains(int value_to_find)
+{
+  std::lock_guard<std::mutex> guard(some_mutex);    // 4
+  return std::find(some_list.begin(),some_list.end(),value_to_find) != some_list.end();
+}
+```
+程序中有一个全局变量①，这个全局变量被一个全局的互斥量保护②。add_to_list()③和list_contains()④函数中使用std::lock_guard\<std::mutex\>，使得这两个函数中对数据的访问是互斥的：list_contains()不可能看到正在被add_to_list()修改的列表。
