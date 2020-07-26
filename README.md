@@ -1,11 +1,3 @@
-<!--
- * @Author: your name
- * @Date: 2020-05-03 18:36:27
- * @LastEditTime: 2020-07-15 20:23:08
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \StupidBirdFliesFirst\README.md
- -->
 # 笨鸟先飞——CS知识库
 本项目旨在总结个人学习中的所见所想，也适用于所有想要入门编程或算法的同学，目前保持每日更新，欢迎大家的加入和指正！
 
