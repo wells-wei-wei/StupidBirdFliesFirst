@@ -47,8 +47,5 @@
   - [tmux](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/tmux.md)
   - [压缩命令](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/tarzip.md)
   - [OpenposeDemo_in_Windows](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Command/openposedemo_win.md)
-<!--
-![C++fundamental](C++fundamental.jpg)
-![cs-fundamental](cs-fundamental.jpg)
-![project-fundamental](project-fundamental.jpg)
- -->
+- 其他
+  - [python多线程](Others/python_multithreads.md)

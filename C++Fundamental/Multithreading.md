@@ -483,5 +483,212 @@ bool list_contains(int value_to_find)
   std::lock_guard<std::mutex> guard(some_mutex);    // 4
   return std::find(some_list.begin(),some_list.end(),value_to_find) != some_list.end();
 }
+
+int main ()
+{
+  std::thread threads[10];
+  // spawn 10 threads:
+  for (int i=0; i<10; ++i)
+    threads[i] = std::thread(add_to_list,i+1);
+
+  for (auto& th : threads) th.join();
+
+  return 0;
+}
 ```
 程序中有一个全局变量①，这个全局变量被一个全局的互斥量保护②。add_to_list()③和list_contains()④函数中使用std::lock_guard\<std::mutex\>，使得这两个函数中对数据的访问是互斥的：list_contains()不可能看到正在被add_to_list()修改的列表。
+
+这里的mutex类就代变一个锁，就像最简单的那种用变量当锁一样，这个mutex就是那个变量。lock_guard是非常典型的RAII风格：
+```c++
+template<typename _Mutex>
+    class lock_guard
+    {
+    public:
+      typedef _Mutex mutex_type;
+
+      explicit lock_guard(mutex_type& __m) : _M_device(__m)
+      { _M_device.lock(); }//作者注:构造对象时加锁(申请资源),构造函数结束，就可以正常使用资源了
+
+      lock_guard(mutex_type& __m, adopt_lock_t) : _M_device(__m)
+      { } // calling thread owns mutex
+
+      ~lock_guard()
+      { _M_device.unlock(); }//作者注:析构对象时解锁(释放资源)
+      // 作者注:禁用拷贝构造函数
+      lock_guard(const lock_guard&) = delete;
+      // 作者注:禁用赋值操作符
+      lock_guard& operator=(const lock_guard&) = delete;
+
+    private:
+      mutex_type&  _M_device;
+    };
+```
+
+虽然某些情况下，使用全局变量没问题，但在大多数情况下，互斥量通常会与保护的数据放在同一个类中，而不是定义成全局变量。这是面向对象设计的准则：将其放在一个类中，就可让他们联系在一起，也可对类的功能进行封装，并进行数据保护。在这种情况下，函数add_to_list和list_contains可以作为这个类的成员函数。互斥量和要保护的数据，在类中都需要定义为private成员，这会让访问数据的代码变的清晰，并且容易看出在什么时候对互斥量上锁。当所有成员函数都会在调用时对数据上锁，结束时对数据解锁，那么就保证了数据访问时不变量不被破坏。
+
+当然，也不是总是那么理想，聪明的你一定注意到了：当其中一个成员函数返回的是保护数据的指针或引用时，会破坏对数据的保护。具有访问能力的指针或引用可以访问(并可能修改)被保护的数据，而不会被互斥锁限制。互斥量保护的数据需要对接口的设计相当谨慎，要确保互斥量能锁住任何对保护数据的访问，并且不留后门。
+
+传递出了保护数据的引用：
+```c++
+class some_data
+{
+  int a;
+  std::string b;
+public:
+  void do_something();
+};
+
+class data_wrapper
+{
+private:
+  some_data data;
+  std::mutex m;
+public:
+  template<typename Function>
+  void process_data(Function func)
+  {
+    std::lock_guard<std::mutex> l(m);
+    func(data);    // 1 传递“保护”数据给用户函数
+  }
+};
+
+some_data* unprotected;
+
+void malicious_function(some_data& protected_data)
+{
+  unprotected=&protected_data;
+}
+
+data_wrapper x;
+void foo()
+{
+  x.process_data(malicious_function);    // 2 传递一个恶意函数
+  unprotected->do_something();    // 3 在无保护的情况下访问保护数据
+}
+```
+例子中process_data看起来没有任何问题，std::lock_guard对数据做了很好的保护，但调用用户提供的函数func①，就意味着foo能够绕过保护机制将函数malicious_function传递进去②，在没有锁定互斥量的情况下调用do_something()。
+
+这段代码的问题在于根本没有保护，只是将所有可访问的数据结构代码标记为互斥。函数foo()中调用unprotected->do_something()的代码未能被标记为互斥。这种情况下，C++线程库无法提供任何帮助，只能由程序员来使用正确的互斥锁来保护数据。从乐观的角度上看，还是有方法可循的：切勿将受保护数据的指针或引用传递到互斥锁作用域之外，无论是函数返回值，还是存储在外部可见内存，亦或是以参数的形式传递到用户提供的函数中去。
+
+虽然这是在使用互斥量保护共享数据时常犯的错误，但绝不仅仅是一个潜在的陷阱而已。下一节中，你将会看到，即便是使用了互斥量对数据进行了保护，条件竞争依旧可能存在。
+
+## 线程池
+```c++
+#pragma once
+#ifndef THREAD_POOL_H
+#define THREAD_POOL_H
+
+#include <vector>
+#include <queue>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
+#include <future>
+#include <functional>
+#include <stdexcept>
+
+namespace std
+{
+#define  MAX_THREAD_NUM 256
+
+//线程池,可以提交变参函数或拉姆达表达式的匿名函数执行,可以获取执行返回值
+//不支持类成员函数, 支持类静态成员函数或全局函数,Opteron()函数等
+class threadpool
+{
+    using Task = std::function<void()>;
+    // 线程池
+    std::vector<std::thread> pool;
+    // 任务队列
+    std::queue<Task> tasks;
+    // 同步
+    std::mutex m_lock;
+    // 条件阻塞
+    std::condition_variable cv_task;
+    // 是否关闭提交
+    std::atomic<bool> stoped;
+    //空闲线程数量
+    std::atomic<int>  idlThrNum;
+
+public:
+    inline threadpool(unsigned short size = 4) :stoped{ false }
+    {
+        idlThrNum = size < 1 ? 1 : size;
+        for (size = 0; size < idlThrNum; ++size)
+        {   //初始化线程数量
+            pool.emplace_back(
+                [this]
+                { // 工作线程函数
+                    while(!this->stoped)
+                    {
+                        std::function<void()> task;
+                        {   // 获取一个待执行的 task
+                            std::unique_lock<std::mutex> lock{ this->m_lock };// unique_lock 相比 lock_guard 的好处是：可以随时 unlock() 和 lock()
+                            this->cv_task.wait(lock,
+                                [this] {
+                                    return this->stoped.load() || !this->tasks.empty();
+                                }
+                            ); // wait 直到有 task
+                            if (this->stoped && this->tasks.empty())
+                                return;
+                            task = std::move(this->tasks.front()); // 取一个 task
+                            this->tasks.pop();
+                        }
+                        idlThrNum--;
+                        task();
+                        idlThrNum++;
+                    }
+                }
+            );
+        }
+    }
+    inline ~threadpool()
+    {
+        stoped.store(true);
+        cv_task.notify_all(); // 唤醒所有线程执行
+        for (std::thread& thread : pool) {
+            //thread.detach(); // 让线程“自生自灭”
+            if(thread.joinable())
+                thread.join(); // 等待任务结束， 前提：线程一定会执行完
+        }
+    }
+
+public:
+    // 提交一个任务
+    // 调用.get()获取返回值会等待任务执行完,获取返回值
+    // 有两种方法可以实现调用类成员，
+    // 一种是使用   bind： .commit(std::bind(&Dog::sayHello, &dog));
+    // 一种是用 mem_fn： .commit(std::mem_fn(&Dog::sayHello), &dog)
+    template<class F, class... Args>
+    auto commit(F&& f, Args&&... args) ->std::future<decltype(f(args...))>
+    {
+        if (stoped.load())    // stop == true ??
+            throw std::runtime_error("commit on ThreadPool is stopped.");
+
+        using RetType = decltype(f(args...)); // typename std::result_of<F(Args...)>::type, 函数 f 的返回值类型
+        auto task = std::make_shared<std::packaged_task<RetType()> >(
+            std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+            );    // wtf !
+        std::future<RetType> future = task->get_future();
+        {    // 添加任务到队列
+            std::lock_guard<std::mutex> lock{ m_lock };//对当前块的语句加锁  lock_guard 是 mutex 的 stack 封装类，构造的时候 lock()，析构的时候 unlock()
+            tasks.emplace(
+                [task]()
+                { // push(Task{...})
+                    (*task)();
+                }
+            );
+        }
+        cv_task.notify_one(); // 唤醒一个线程执行
+
+        return future;
+    }
+
+    //空闲线程数量
+    int idlCount() { return idlThrNum; }
+
+};
+
+}
+
+#endif
+```
