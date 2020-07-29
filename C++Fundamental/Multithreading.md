@@ -498,7 +498,14 @@ int main ()
 ```
 程序中有一个全局变量①，这个全局变量被一个全局的互斥量保护②。add_to_list()③和list_contains()④函数中使用std::lock_guard\<std::mutex\>，使得这两个函数中对数据的访问是互斥的：list_contains()不可能看到正在被add_to_list()修改的列表。
 
-这里的mutex类就代变一个锁，就像最简单的那种用变量当锁一样，这个mutex就是那个变量。lock_guard是非常典型的RAII风格：
+这里的mutex类就代变一个锁，就像最简单的那种用变量当锁一样，这个mutex就是那个变量。
+简单总结一些std::mutex：
+1. 对于std::mutex对象，任意时刻最多允许一个线程对其进行上锁
+2. mtx.lock()：调用该函数的线程尝试加锁。如果上锁不成功，即：其它线程已经上锁且未释放，则当前线程block。如果上锁成功，则执行后面的操作，操作完成后要调用mtx.unlock()释放锁，否则会导致死锁的产生
+3. mtx.unlock()：释放锁
+4. std::mutex还有一个操作：mtx.try_lock()，字面意思就是：“尝试上锁”，与mtx.lock()的不同点在于：如果上锁不成功，当前线程不阻塞。
+
+lock_guard是非常典型的RAII风格：
 ```c++
 template<typename _Mutex>
     class lock_guard
@@ -595,17 +602,19 @@ namespace std
 //不支持类成员函数, 支持类静态成员函数或全局函数,Opteron()函数等
 class threadpool
 {
-    using Task = std::function<void()>;
+    //这里的using的作用与typedef和#define一样，就是给std::function<void()>起个别名
+    using Task = std::function<void()>;//①
     // 线程池
     std::vector<std::thread> pool;
     // 任务队列
     std::queue<Task> tasks;
     // 同步
     std::mutex m_lock;
+
     // 条件阻塞
     std::condition_variable cv_task;
     // 是否关闭提交
-    std::atomic<bool> stoped;
+    std::atomic<bool> stoped;//②
     //空闲线程数量
     std::atomic<int>  idlThrNum;
 
@@ -615,17 +624,20 @@ public:
         idlThrNum = size < 1 ? 1 : size;
         for (size = 0; size < idlThrNum; ++size)
         {   //初始化线程数量
-            pool.emplace_back(
-                [this]
-                { // 工作线程函数
+            pool.emplace_back(//③
+            // 工作线程函数
+                [this]//④
+                {   //只要不关闭提交就一直运行
                     while(!this->stoped)
                     {
+                        //定义一个
                         std::function<void()> task;
                         {   // 获取一个待执行的 task
-                            std::unique_lock<std::mutex> lock{ this->m_lock };// unique_lock 相比 lock_guard 的好处是：可以随时 unlock() 和 lock()
-                            this->cv_task.wait(lock,
+                            std::unique_lock<std::mutex> lock{ this->m_lock };
+                            // unique_lock 相比 lock_guard 的好处是：可以随时 unlock() 和 lock()
+                            this->cv_task.wait(lock,//⑤
                                 [this] {
-                                    return this->stoped.load() || !this->tasks.empty();
+                                    return this->stoped.load() || !this->tasks.empty();//.load()表示以原子方式加载并返回值
                                 }
                             ); // wait 直到有 task
                             if (this->stoped && this->tasks.empty())
@@ -658,8 +670,8 @@ public:
     // 有两种方法可以实现调用类成员，
     // 一种是使用   bind： .commit(std::bind(&Dog::sayHello, &dog));
     // 一种是用 mem_fn： .commit(std::mem_fn(&Dog::sayHello), &dog)
-    template<class F, class... Args>
-    auto commit(F&& f, Args&&... args) ->std::future<decltype(f(args...))>
+    template<class F, class... Args>//class... Args是一个参数包，这个参数包中可以包含0到任意个模板参数
+    auto commit(F&& f, Args&&... args) ->std::future<decltype(f(args...))>//⑥
     {
         if (stoped.load())    // stop == true ??
             throw std::runtime_error("commit on ThreadPool is stopped.");
@@ -667,7 +679,7 @@ public:
         using RetType = decltype(f(args...)); // typename std::result_of<F(Args...)>::type, 函数 f 的返回值类型
         auto task = std::make_shared<std::packaged_task<RetType()> >(
             std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-            );    // wtf !
+            );    //⑦
         std::future<RetType> future = task->get_future();
         {    // 添加任务到队列
             std::lock_guard<std::mutex> lock{ m_lock };//对当前块的语句加锁  lock_guard 是 mutex 的 stack 封装类，构造的时候 lock()，析构的时候 unlock()
@@ -692,3 +704,256 @@ public:
 
 #endif
 ```
+```c++
+#include "threadpool.h"
+#include <iostream>
+
+void fun1(int slp)
+{
+    printf("  hello, fun1 !  %d\n" ,std::this_thread::get_id());
+    if (slp>0) {
+        printf(" ======= fun1 sleep %d  =========  %d\n",slp, std::this_thread::get_id());
+        std::this_thread::sleep_for(std::chrono::milliseconds(slp));
+    }
+}
+
+struct gfun {
+    int operator()(int n) {
+        printf("%d  hello, gfun !  %d\n" ,n, std::this_thread::get_id() );
+        return 42;
+    }
+};
+
+class A {
+public:
+    static int Afun(int n = 0) {   //函数必须是 static 的才能直接使用线程池
+        std::cout << n << "  hello, Afun !  " << std::this_thread::get_id() << std::endl;
+        return n;
+    }
+
+    static std::string Bfun(int n, std::string str, char c) {
+        std::cout << n << "  hello, Bfun !  "<< str.c_str() <<"  " << (int)c <<"  " << std::this_thread::get_id() << std::endl;
+        return str;
+    }
+};
+
+int main()
+    try {
+        std::threadpool executor{ 50 };
+        A a;
+        std::future<void> ff = executor.commit(fun1,0);
+        std::future<int> fg = executor.commit(gfun{},0);
+        std::future<int> gg = executor.commit(a.Afun, 9999); //IDE提示错误,但可以编译运行
+        std::future<std::string> gh = executor.commit(A::Bfun, 9998,"mult args", 123);
+        std::future<std::string> fh = executor.commit([]()->std::string { std::cout << "hello, fh !  " << std::this_thread::get_id() << std::endl; return "hello,fh ret !"; });
+
+        std::cout << " =======  sleep ========= " << std::this_thread::get_id() << std::endl;
+        std::this_thread::sleep_for(std::chrono::microseconds(900));
+
+        for (int i = 0; i < 50; i++) {
+            executor.commit(fun1,i*100 );
+        }
+        std::cout << " =======  commit all ========= " << std::this_thread::get_id()<< " idlsize="<<executor.idlCount() << std::endl;
+
+        std::cout << " =======  sleep ========= " << std::this_thread::get_id() << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+
+        ff.get(); //调用.get()获取返回值会等待线程执行完,获取返回值
+        std::cout << fg.get() << "  " << fh.get().c_str()<< "  " << std::this_thread::get_id() << std::endl;
+
+        std::cout << " =======  sleep ========= " << std::this_thread::get_id() << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+
+        std::cout << " =======  fun1,55 ========= " << std::this_thread::get_id() << std::endl;
+        executor.commit(fun1,55).get();    //调用.get()获取返回值会等待线程执行完
+
+        std::cout << "end... " << std::this_thread::get_id() << std::endl;
+
+
+        std::threadpool pool(4);
+        std::vector< std::future<int> > results;
+
+        for (int i = 0; i < 8; ++i) {
+            results.emplace_back(
+                pool.commit([i] {
+                    std::cout << "hello " << i << std::endl;
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    std::cout << "world " << i << std::endl;
+                    return i*i;
+                })
+            );
+        }
+        std::cout << " =======  commit all2 ========= " << std::this_thread::get_id() << std::endl;
+
+        for (auto && result : results)
+            std::cout << result.get() << ' ';
+        std::cout << std::endl;
+        return 0;
+    }
+catch (std::exception& e) {
+    std::cout << "some unhappy happened...  " << std::this_thread::get_id() << e.what() << std::endl;
+}
+```
+细节解释：
+
+①处的std::function是对于所有可调用对象的统一操作。所谓可调用对象大概有以下几种形式：
+```c++
+// 普通函数
+int add(int a, int b){return a+b;} 
+
+// lambda表达式
+auto mod = [](int a, int b){ return a % b;}
+
+// 函数对象类
+struct divide{
+    int operator()(int denominator, int divisor){
+        return denominator/divisor;
+    }
+};
+```
+上述三种可调用对象虽然类型不同，但是共享了一种调用形式：
+```c++
+int(int ,int)
+```
+std::function就可以将上述类型保存起来，如下：
+```c++
+std::function<int(int ,int)>  a = add; 
+std::function<int(int ,int)>  b = mod ; 
+std::function<int(int ,int)>  c = divide(); 
+```
+总结来说，std::function 是一个可调用对象包装器，是一个类模板，可以容纳除了类成员函数指针之外的所有可调用对象，它可以用统一的方式处理函数、函数对象、函数指针，并允许保存和延迟它们的执行。
+
+std::function可以取代函数指针的作用，因为它可以延迟函数的执行，特别适合作为回调函数使用。它比普通函数指针更加的灵活和便利。
+
+②处的std::atomic表示原子操作，所有其所定义的变量的相关操作都是原子性的。
+
+③处建立了一个线程队列Pool，其中的每个元素类型都是std::thread。emplace_back和push_back在效果上相同，但是使用push_back()向容器中加入一个右值元素（临时对象）的时候，首先会调用构造函数构造这个临时对象，然后需要调用拷贝构造函数将这个临时对象放入容器中。原来的临时变量释放。这样造成的问题是临时变量申请的资源就浪费。引入了右值引用，转移构造函数后，push_back()右值时就会调用构造函数和转移构造函数。在这上面有进一步优化的空间就是使用emplace_back()，这个函数将原地构造元素，不需要触发拷贝构造和转移构造。而且调用形式更加简洁，直接根据参数初始化临时对象的成员：
+```c++
+struct President  
+{  
+    std::string name;  
+    std::string country;  
+    int year;  
+
+    President(std::string p_name, std::string p_country, int p_year)  
+        : name(std::move(p_name)), country(std::move(p_country)), year(p_year)  
+    {  
+        std::cout << "I am being constructed.\n";  
+    }
+    President(const President& other)
+        : name(std::move(other.name)), country(std::move(other.country)), year(other.year)
+    {
+        std::cout << "I am being copy constructed.\n";
+    }
+    President(President&& other)  
+        : name(std::move(other.name)), country(std::move(other.country)), year(other.year)  
+    {  
+        std::cout << "I am being moved.\n";  
+    }  
+    President& operator=(const President& other);  
+};  
+
+std::vector<President> elections;  
+std::cout << "emplace_back:\n";  
+elections.emplace_back("Nelson Mandela", "South Africa", 1994); //形式上与President的构造函数相同，但是没有类的创建，就是在vector里原地构造
+```
+
+④处就是将要进入Pool的内容，Pool的元素类型是thread，在没有参数的情况下，直接向thread里放入一个函数名就行。这里使用的是lambda函数代替函数名。所谓lambda就是一个临时的函数，也就是匿名函数，本质上也是一个函数，只是还没有名字。
+
+lambda表达式：
+```c++
+[capture list] (params list) mutable exception-> return type { function body }
+```
+各项具体含义如下
+- capture list：捕获外部变量列表
+- params list：形参列表（没有形参的可以省略）
+- mutable指示符：用来说用是否可以修改捕获的变量（可省）
+- exception：异常设定（可省）
+- return type：返回类型（没有返回值可省）
+- function body：函数体
+
+⑤处表示条件变量，当 std::condition_variable对象的某个wait 函数被调用的时候，它使用 std::unique_lock(通过 std::mutex) 来锁住当前线程，当前线程会一直被阻塞，直到另外一个线程在相同的std::condition_variable对象上调用了 notification 函数来唤醒当前线程。std::condition_variable提供了两种 wait() 函数。当前线程调用wait()后将被阻塞，直到另外某个线程调用notify_*唤醒了当前线程。在第二种情况下除了锁以外还有第二个参数（bool），只有当第二个参数为false时调用 wait()才会阻塞当前线程，并且在收到其他线程的通知后，只有当第二参数为true时才会被解除阻塞。本线程池中使用的就是第二种。
+
+⑥处的std::future提供了一种访问异步操作结果的机制。
+
+同步就是整个处理过程顺序执行，当各个过程都执行完毕，并返回结果。是一种线性执行的方式，执行的流程不能跨越。一般用于流程性比较强的程序，比如用户登录，需要对用户验证完成后才能登录系统。异步则是只是发送了调用的指令，调用者无需等待被调用的方法完全执行完毕；而是继续执行下面的流程。是一种并行处理的方式，不必等待一个程序执行完，可以执行其它的任务，比如页面数据加载过程，不需要等所有数据获取后再显示页面。
+
+通常一个异步操作我们是不能马上就获取操作结果的，只能在未来某个时候获取。我们可以以同步等待的方式来获取结果，可以通过查询future的状态（future_status）来获取异步操作的结果。future_status有三种状态：
+deferred：异步操作还没开始
+ready：异步操作已经完成
+timeout：异步操作超时
+
+获取future结果有三种方式：get、wait、wait_for，其中get等待异步操作结束并返回结果，wait只是等待异步操作完成，没有返回值，wait_for是超时等待返回结果。
+```c++
+//查询future的状态
+std::future_status status;
+do {
+    status = future.wait_for(std::chrono::seconds(1));
+    if (status == std::future_status::deferred) {
+        std::cout << "deferred\n";
+    } else if (status == std::future_status::timeout) {
+        std::cout << "timeout\n";
+    } else if (status == std::future_status::ready) {
+        std::cout << "ready!\n";
+    }
+} while (status != std::future_status::ready);
+```
+
+⑥处的->是一种新的函数声明方式，目前函数的声明方式主要就是两种：
+```c++
+return-type identifier ( argument-declarations... )
+```
+```c++
+auto identifier ( argument-declarations... ) -> return_type
+```
+第二种表达式主要是为了解决模板函数的推断问题。因为在定义有返回值的函数模板的时候是不知道返回值的类型的，比如说一个模板函数要计算a+b，a和b是两个模板类型，这样的话是不知道最终能返回什么的。所以这里也引入了一个自动推断函数decltype，由->和decltype配合就能完成这种需要返回值的模板函数：
+```c++
+template <typename T1, typename T2>
+auto compose(T1 a, T2 b) -> decltype(a + b);
+```
+
+⑦处比较复杂，这里分别解释一下：
+- std::make_shared可以返回一个指定类型的std::shared_ptr
+- std::packaged_task 包装一个可调用的对象，并且允许异步获取该可调用对象产生的结果，从包装可调用对象意义上来讲，std::packaged_task 与 std::function 类似，只不过 std::packaged_task 将其包装的可调用对象的执行结果传递给一个 std::future 对象（该对象通常在另外一个线程中获取 std::packaged_task 任务的执行结果）。std::packaged_task 对象内部包含了两个最基本元素，一、被包装的任务(stored task)，任务(task)是一个可调用的对象，如函数指针、成员函数指针或者函数对象，二、共享状态(shared state)，用于保存任务的返回值，可以通过 std::future 对象来达到异步访问共享状态的效果。
+```c++
+#include <iostream>     // std::cout
+#include <future>       // std::packaged_task, std::future
+#include <chrono>       // std::chrono::seconds
+#include <thread>       // std::thread, std::this_thread::sleep_for
+
+// count down taking a second for each value:
+int countdown (int from, int to) {
+    for (int i=from; i!=to; --i) {
+        std::cout << i << '\n';
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    std::cout << "Finished!\n";
+    return from - to;
+}
+
+int main ()
+{
+    std::packaged_task<int(int,int)> task(countdown); // 设置 packaged_task
+    std::future<int> ret = task.get_future(); // 获得与 packaged_task 共享状态相关联的 future 对象.
+
+    std::thread th(std::move(task), 10, 0);   //创建一个新线程完成计数任务.
+
+    int value = ret.get();                    // 等待任务完成并获取结果.
+
+    std::cout << "The countdown lasted for " << value << " seconds.\n";
+
+    th.join();
+    return 0;
+}
+```
+- std::bind，可将std::bind函数看作一个通用的函数适配器，它接受一个可调用对象，生成一个新的可调用对象来“适应”原对象的参数列表。
+
+std::bind将可调用对象与其参数一起进行绑定，绑定后的结果可以使用std::function保存。std::bind主要有以下两个作用：将可调用对象和其参数绑定成一个防函数；只绑定部分参数，减少可调用对象传入的参数。
+```c++
+double my_divide (double x, double y) {return x/y;}
+auto fn_half = std::bind (my_divide,_1,2);  
+std::cout << fn_half(10) << '\n';           
+```
+bind的第一个参数是函数名，普通函数做实参时，会隐式转换成函数指针。因此std::bind (my_divide,_1,2)等价于std::bind (&my_divide,_1,2)；_1表示占位符，位于\<functional\>中，std::placeholders::_1；
+
+- forward() 函数，类似于 move() 函数，后者是将参数右值化，前者是... 肿么说呢？大概意思就是：不改变最初传入的类型的引用类型(左值还是左值，右值还是右值)；
