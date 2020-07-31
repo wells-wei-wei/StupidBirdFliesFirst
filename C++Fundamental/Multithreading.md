@@ -578,7 +578,121 @@ void foo()
 
 这段代码的问题在于根本没有保护，只是将所有可访问的数据结构代码标记为互斥。函数foo()中调用unprotected->do_something()的代码未能被标记为互斥。这种情况下，C++线程库无法提供任何帮助，只能由程序员来使用正确的互斥锁来保护数据。从乐观的角度上看，还是有方法可循的：切勿将受保护数据的指针或引用传递到互斥锁作用域之外，无论是函数返回值，还是存储在外部可见内存，亦或是以参数的形式传递到用户提供的函数中去。
 
-## 接口固有问题导致的竞争
+## 接口内的条件竞争问题
+假设使用stl中的stack写以下这样的程序：
+```c++
+stack<int> s;
+if (! s.empty()){    // 1
+  int const value = s.top();    // 2
+  s.pop();    // 3
+  do_something(value);
+}
+```
+由于stl中的容器没有线程安全的，所以如果写成多线程的形式，每个线程都对同一个stack实例s进行同样的操作的话，可能出现下面这样的问题：
+|  Thread A   | Thread B  |
+|  ----  | ----  |
+| if (!s.empty);  |   |
+|    | if(!s.empty); |
+| int const value = s.top();| |
+||int const value = s.top();|
+|s.pop();||
+|do_something(value);	|s.pop();|
+||do_something(value);|
+|||
+也就是说，在两个线程的运行中，线程A首先用s.pop()将顶部元素出栈，这时出栈的肯定是线程A前面int const value = s.top()的这个元素；但是之后线程B也进行了s.pop()，这时出栈的可就不是xianchengB前面int const value = s.top()的那个元素了，因为前面线程A已经出栈一回了，线程B出去的就不是前面输出的顶部那个，而是又下一个元素，这样实际出栈的元素和前面输出的就不是同一个，这就是stl线程不安全的体现。其他例子比如还有链表在添加元素的时候，需要先断链，假如就在这个断链的时候另外一个线程也来插入的话，那肯定是要出问题的。
+
+这种时候首先想到的第一种方法就是给这几部操作都加上锁：
+```c++
+void stackTest(stack<int> s)
+{
+  std::lock_guard<std::mutex> guard(some_mutex);    // 3
+  if (! s.empty()){    // 1
+    int const value = s.top();    // 2
+    s.pop();    // 3
+    do_something(value);
+  }
+}
+```
+这种一般来说是可以的，但是在多线程并发的场景中，每一个锁所掌管的程序区域应该需要尽量小，也就是**锁粒度尽量小**，因为这样可以减少持有锁的时间，降低其他线程的阻塞时间。所以现在就需要在接口层面来解决竞争问题。
+
+>为什么要加锁？加锁是为了防止不同的线程访问同一共享资源造成混乱。
+打个比方：人是不同的线程，卫生间是共享资源
+你在上洗手间的时候肯定要把门锁上吧，这就是加锁，只要你在里面，这个卫生间就被锁了，只有你出来之后别人才能用。想象一下如果卫生间的门没有锁会是什么样？
+
+>什么是加锁粒度呢？所谓加锁粒度就是你要锁住的范围是多大。
+比如你在家上卫生间，你只要锁住卫生间就可以了吧，不需要将整个家都锁起来不让家人进门吧，卫生间就是你的加锁粒度。
+
+>怎样才算合理的加锁粒度呢？
+其实卫生间并不只是用来上厕所的，还可以洗澡，洗手。这里就涉及到优化加锁粒度的问题。
+你在卫生间里洗澡，其实别人也可以同时去里面洗手，只要做到隔离起来就可以，如果马桶，浴缸，洗漱台都是隔开相对独立的，实际上卫生间可以同时给三个人使用，
+当然三个人做的事儿不能一样。这样就细化了加锁粒度，你在洗澡的时候只要关上浴室的门，别人还是可以进去洗手的。如果当初设计卫生间的时候没有将不同的功能区域划分
+隔离开，就不能实现卫生间资源的最大化使用。这就是设计架构的重要性。
+
+在接口层面解决问题：
+```c++
+#include <exception>
+#include <memory>
+#include <mutex>
+#include <stack>
+
+struct empty_stack: std::exception
+{
+  const char* what() const throw() {
+    return "empty stack!";
+  };
+};
+
+template<typename T>
+class threadsafe_stack
+{
+private:
+  std::stack<T> data;
+  mutable std::mutex m;
+
+public:
+  threadsafe_stack()
+    : data(std::stack<T>()){}
+
+  threadsafe_stack(const threadsafe_stack& other)
+  {
+    std::lock_guard<std::mutex> lock(other.m);
+    data = other.data; // 1 在构造函数体中的执行拷贝
+  }
+
+  threadsafe_stack& operator=(const threadsafe_stack&) = delete;
+
+  void push(T new_value)
+  {
+    std::lock_guard<std::mutex> lock(m);
+    data.push(new_value);
+  }
+
+  std::shared_ptr<T> pop()
+  {
+    std::lock_guard<std::mutex> lock(m);
+    if(data.empty()) throw empty_stack(); // 在调用pop前，检查栈是否为空
+
+    std::shared_ptr<T> const res(std::make_shared<T>(data.top())); // 在修改堆栈前，分配出返回值
+    data.pop();
+    return res;
+  }
+
+  void pop(T& value)
+  {
+    std::lock_guard<std::mutex> lock(m);
+    if(data.empty()) throw empty_stack();
+
+    value=data.top();
+    data.pop();
+  }
+
+  bool empty() const
+  {
+    std::lock_guard<std::mutex> lock(m);
+    return data.empty();
+  }
+};
+```
 
 ## 线程池
 ```c++
