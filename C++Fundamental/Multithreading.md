@@ -874,6 +874,97 @@ void process_data()
 }
 ```
 
+## 保护共享数据的方式
+### 保护共享数据的初始化
+假如连接数据库或者需要分配很多内存时，这种初始化的代价是比较昂贵的，但是在多线程中或许必须在每次运行过程中都必须检查一遍。例如和数据库的连接，每次上传之前可以检查一下是否已经建立连接，如果没有就连接，有就不连。这种情况下其实只需要初始化一次就行，所以对于初始化过程需要有锁来保护。
+
+c++11中使用std::once_flag和std::call_once来处理这种情况，他们可以保证其所保护的函数在多线程中只被运行一次：
+```c++
+std::shared_ptr<some_resource> resource_ptr;
+std::once_flag resource_flag;  // 1
+
+void init_resource()
+{
+  resource_ptr.reset(new some_resource);
+}
+
+void foo()
+{
+  std::call_once(resource_flag,init_resource);  // 可以完整的进行一次初始化
+  resource_ptr->do_something();
+}
+```
+```c++
+class X
+{
+private:
+  connection_info connection_details;
+  connection_handle connection;
+  std::once_flag connection_init_flag;
+
+  void open_connection()
+  {
+    connection=connection_manager.open(connection_details);
+  }
+public:
+  X(connection_info const& connection_details_):
+      connection_details(connection_details_)
+  {}
+  void send_data(data_packet const& data)  // 1
+  {
+    std::call_once(connection_init_flag,&X::open_connection,this);  // 2
+    connection.send_data(data);
+  }
+  data_packet receive_data()  // 3
+  {
+    std::call_once(connection_init_flag,&X::open_connection,this);  // 2
+    return connection.receive_data();
+  }
+};
+```
+例子中第一次调用send_data()①或receive_data()③的线程完成初始化过程。使用成员函数open_connection()去初始化数据，也需要将this指针传进去。和其在标准库中的函数一样，其接受可调用对象，比如std::thread的构造函数和std::bind()，通过向std::call_once()②传递一个额外的参数来完成这个操作。
+
+值得注意的是，std::mutex和std::once_flag的实例不能拷贝和移动，需要通过显式定义相应的成员函数，对这些类成员进行操作。
+
+另外类中的static修饰的变量必须要求定义时就初始化，在c++11中static修饰的变量的初始化是线程安全的，也就是说它直接就是只会被定义一次的。
+
+### 保护不常更新的数据
+经常会有这样一种不常使用的数据，在修改它的时候需要锁，但是需要读取它的时候就需要锁了，这种情况下C++17标准库提供了两种非常好的互斥量——std::shared_mutex和std::shared_timed_mutex。C++14只提供了std::shared_timed_mutex，并且在C++11中并未提供任何互斥量类型。如果还在用支持C++14标准之前的编译器，可以使用Boost库中的互斥量。std::shared_mutex和std::shared_timed_mutex的不同点在于，std::shared_timed_mutex支持更多的操作方式(参考4.3节)，std::shared_mutex有更高的性能优势，但支持的操作较少。
+
+于更新操作，可以使用std::lock_guard\<std::shared_mutex\>和std::unique_lock\<std::shared_mutex\>上锁。作为std::mutex的替代方案，与std::mutex所做的一样，这就能保证更新线程的独占访问。因为其他线程不需要去修改数据结构，所以其可以使用std::shared_lock\<std::shared_mutex\>获取访问权。这种RAII类型模板是在C++14中的新特性，这与使用std::unique_lock一样(除非多线程要在同时获取同一个std::shared_mutex的共享锁)。唯一的限制：当任一线程拥有一个共享锁时，这个线程就会尝试获取独占锁，直到其他线程放弃锁。当任一线程拥有一个独占锁时，其他线程就无法获得共享锁或独占锁，直到第一个线程放弃其拥有的锁。
+```c++
+#include <map>
+#include <string>
+#include <mutex>
+#include <shared_mutex>
+
+class dns_entry;
+
+class dns_cache
+{
+  std::map<std::string,dns_entry> entries;
+  mutable std::shared_mutex entry_mutex;
+public:
+  dns_entry find_entry(std::string const& domain) const
+  {
+    std::shared_lock<std::shared_mutex> lk(entry_mutex);  // 1
+    std::map<std::string,dns_entry>::const_iterator const it=
+       entries.find(domain);
+    return (it==entries.end())?dns_entry():it->second;
+  }
+  void update_or_add_entry(std::string const& domain,
+                           dns_entry const& dns_details)
+  {
+    std::lock_guard<std::shared_mutex> lk(entry_mutex);  // 2
+    entries[domain]=dns_details;
+  }
+};
+```
+shared_lock指的是被上锁后仍然允许其他线程执行同样被shared_lock的代码，其中使用的锁是std::shared_mutex，它与普通的mutex相比多了lock_shared函数，这个锁允许其他同样的锁进行共享，在shared_lock中也正是执行的这个函数。而在lock_guard中调用shared_mutex执行的就还是lock函数，所以这时与普通的mutex就一样了。这就实现了一个读写锁。
+
+### 嵌套锁
+尽量避免
+
 ## 线程池
 ```c++
 #pragma once
@@ -1252,3 +1343,5 @@ std::cout << fn_half(10) << '\n';
 bind的第一个参数是函数名，普通函数做实参时，会隐式转换成函数指针。因此std::bind (my_divide,_1,2)等价于std::bind (&my_divide,_1,2)；_1表示占位符，位于\<functional\>中，std::placeholders::_1；
 
 - forward() 函数，类似于 move() 函数，后者是将参数右值化，前者是... 肿么说呢？大概意思就是：不改变最初传入的类型的引用类型(左值还是左值，右值还是右值)；
+
+# 同步操作
