@@ -747,6 +747,133 @@ public:
 ```
 这里是将lock和lock_guard配合使用，因为一般lock必须配合使用unlock函数进行解锁，这里使用lock_guard可以保证在函数出栈的时候能够unlock，所以就不用单独加unlock了。
 
+其他避免死锁的建议：
+1. 避免嵌套锁
+   线程获得一个锁时，就别再去获取第二个。每个线程只持有一个锁，就不会产生死锁。当需要获取多个锁，使用std::lock来做这件事(对获取锁的操作上锁)，避免产生死锁。
+2. 避免在持有锁时调用外部代码
+   因为代码是外部提供的，所以没有办法确定外部要做什么。外部程序可能做任何事情，包括获取锁。在持有锁的情况下，如果用外部代码要获取一个锁，就会违反第一个指导意见，并造成死锁(有时这是无法避免的)。当写通用代码时(例如栈)，每一个操作的参数类型，都是外部提供的定义，这就需要其他指导意见来帮助你了。
+3. 使用固定顺序获取锁
+   当硬性要求获取两个或两个以上的锁，并且不能使用std::lock单独操作来获取它们时，最好在每个线程上，用固定的顺序获取它们(锁)。
+
+当然很多时候不会这么简单，比如如果出现那种两个线程从反方向访问链表的话，就很有可能出现前面的那种死锁的问题。这时为了消除死锁可能就必须控制遍历链表顺序，以及定义获取锁的顺序。
+
+## 层次锁
+```c++
+class hierarchical_mutex
+{
+  std::mutex internal_mutex;
+  
+  unsigned long const hierarchy_value;
+  unsigned long previous_hierarchy_value;
+  
+  static thread_local unsigned long this_thread_hierarchy_value;  // 1
+  
+  void check_for_hierarchy_violation()
+  {
+    if(this_thread_hierarchy_value <= hierarchy_value)  // 2
+    {
+      throw std::logic_error(“mutex hierarchy violated”);
+    }
+  }
+  
+  void update_hierarchy_value()
+  {
+    previous_hierarchy_value=this_thread_hierarchy_value;  // 3
+    this_thread_hierarchy_value=hierarchy_value;
+  }
+  
+public:
+  explicit hierarchical_mutex(unsigned long value):
+      hierarchy_value(value),
+      previous_hierarchy_value(0)
+  {}
+  
+  void lock()
+  {
+    check_for_hierarchy_violation();
+    internal_mutex.lock();  // 4
+    update_hierarchy_value();  // 5
+  }
+  
+  void unlock()
+  {
+    if(this_thread_hierarchy_value!=hierarchy_value)
+      throw std::logic_error(“mutex hierarchy violated”);  // 9
+    this_thread_hierarchy_value=previous_hierarchy_value;  // 6
+    internal_mutex.unlock();
+  }
+  
+  bool try_lock()
+  {
+    check_for_hierarchy_violation();
+    if(!internal_mutex.try_lock())  // 7
+      return false;
+    update_hierarchy_value();
+    return true;
+  }
+};
+thread_local unsigned long hierarchical_mutex::this_thread_hierarchy_value(ULONG_MAX);  // 8
+```
+```c++
+hierarchical_mutex high_level_mutex(10000); // 1
+hierarchical_mutex low_level_mutex(5000);  // 2
+hierarchical_mutex other_mutex(6000); // 3
+
+int do_low_level_stuff();
+
+int low_level_func()
+{
+  std::lock_guard<hierarchical_mutex> lk(low_level_mutex); // 4
+  return do_low_level_stuff();
+}
+
+void high_level_stuff(int some_param);
+
+void high_level_func()
+{
+  std::lock_guard<hierarchical_mutex> lk(high_level_mutex); // 6
+  high_level_stuff(low_level_func()); // 5
+}
+
+void thread_a()  // 7
+{
+  high_level_func();
+}
+
+void do_other_stuff();
+
+void other_stuff()
+{
+  high_level_func();  // 10
+  do_other_stuff();
+}
+
+void thread_b() // 8
+{
+  std::lock_guard<hierarchical_mutex> lk(other_mutex); // 9
+  other_stuff();
+}
+```
+这里的hierarchical_mutex表示层次锁，括号中的值表示级别，只有在锁上高层次锁之后才能再锁低层次的锁，就比如thread A中就是先锁上了级别高的high_level_mutex，然后才能获得低层次的。但是thread B中的向先得低层次再得高层次，这就会出问题。
+
+hierarchical_mutex重点是使用了thread_local的值来代表当前线程的层级值：this_thread_hierarchy_value①，初始化为最大值⑧，所以最初所有线程都能被锁住。因为其声明中有thread_local，所以每个线程都有其副本，这样线程中变量状态完全独立，当从另一个线程进行读取时，变量的状态也完全独立。
+
+## 互斥量的传递
+```c++
+std::unique_lock<std::mutex> get_lock()
+{
+  extern std::mutex some_mutex;
+  std::unique_lock<std::mutex> lk(some_mutex);
+  prepare_data();
+  return lk;  // 1
+}
+void process_data()
+{
+  std::unique_lock<std::mutex> lk(get_lock());  // 2
+  do_something();
+}
+```
+
 ## 线程池
 ```c++
 #pragma once
