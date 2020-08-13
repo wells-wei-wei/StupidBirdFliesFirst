@@ -1344,4 +1344,167 @@ bind的第一个参数是函数名，普通函数做实参时，会隐式转换�
 
 - forward() 函数，类似于 move() 函数，后者是将参数右值化，前者是... 肿么说呢？大概意思就是：不改变最初传入的类型的引用类型(左值还是左值，右值还是右值)；
 
-# 同步操作
+# 同步并发操作
+## 等待一个事件或其他条件
+很多时候会出现这种情况，一个线程B需要等待另一个线程A完成之后再运行。这时不仅需要一个锁，还需要一个标志来标明前面的线程A已经运行完了。这时我们有三种可行的选择：
+1. 线程B可以持续检查标志（一个变量或者某种条件），直到另一线程完成工作时对这个标志进行重设。但是这种选择会让线程一直浪费时间再检测标志上。因为线程的很多时候都是在并发运行，会进行切换，这时明明线程A运行不了，却还必须要把它切回来让他判断一次，就非常浪费资源。
+2. 可以让每次检测标志之后都间隔一段时间，为了不让线程B频繁地切换：
+   ```c++
+   std::this_thread::sleep_for(std::chrono::milliseconds(100));  //休眠100ms
+   ```
+   但是这种选择主要的问题就是休眠时间不好把握。
+3. 以上这两种选择都是治标不治本，最好的办法其实就是线程B持续进行休眠，线程A在执行完以后把线程B给叫醒，这才是效率最高的办法。因此可以使用C++11中的条件变量
+### 等待条件达成
+C++标准库对条件变量有两套实现：std::condition_variable和std::condition_variable_any。这两个实现都包含在\<condition_variable\>头文件的声明中。两者都需要与一个互斥量一起才能工作(互斥量是为了同步)；前者仅限于与std::mutex一起工作，而后者可以和任何满足最低标准的互斥量一起工作，从而加上了_any的后缀。因为std::condition_variable_any更加通用，这就可能从体积、性能，以及系统资源的使用方面产生额外的开销，所以std::condition_variable一般作为首选的类型，当对灵活性有硬性要求时，我们才会去考虑std::condition_variable_any。
+```c++
+std::mutex mut;
+std::queue<data_chunk> data_queue;  // 1
+std::condition_variable data_cond;
+
+void data_preparation_thread()
+{
+  while(more_data_to_prepare())
+  {
+    data_chunk const data=prepare_data();
+    std::lock_guard<std::mutex> lk(mut);
+    data_queue.push(data);  // 2
+    data_cond.notify_one();  // 3
+  }
+}
+
+void data_processing_thread()
+{
+  while(true)
+  {
+    std::unique_lock<std::mutex> lk(mut);  // 4
+    data_cond.wait(
+         lk,[]{return !data_queue.empty();});  // 5
+    data_chunk data=data_queue.front();
+    data_queue.pop();
+    lk.unlock();  // 6
+    process(data);
+    if(is_last_chunk(data))
+      break;
+  }
+}
+```
+首先，你拥有一个用来在两个线程之间传递数据的队列①。当数据准备好时，使用std::lock_guard对队列上锁，将准备好的数据压入队列中②，之后线程会对队列中的数据上锁。然后调用std::condition_variable的notify_one()成员函数，对等待的线程(如果有等待线程)进行通知③。
+
+在另外一侧，你有一个正在处理数据的线程，这个线程首先对互斥量上锁，但在这里std::unique_lock要比std::lock_guard④更加合适——这个一会儿再说。线程之后会调用std::condition_variable的成员函数wait()，传递一个锁和一个lambda函数表达式(作为等待的条件⑤)。Lambda函数是C++11添加的新特性，它可以让一个匿名函数作为其他表达式的一部分，并且非常合适作为标准函数的谓词，例如wait()函数。在这个例子中，简单的lambda函数[]{return !data_queue.empty();}会去检查data_queue是否不为空，当data_queue不为空——那就意味着队列中已经准备好数据了。附录A的A.5节有Lambda函数更多的信息。
+
+wait()会去检查这些条件(通过调用所提供的lambda函数)，当条件满足(lambda函数返回true)时返回。如果条件不满足(lambda函数返回false)，wait()函数将解锁互斥量，并且将这个线程(上段提到的处理数据的线程)置于阻塞或等待状态。当准备数据的线程调用notify_one()通知条件变量时，处理数据的线程从睡眠状态中苏醒，重新获取互斥锁，并且对条件再次检查，在条件满足的情况下，从wait()返回并继续持有锁。当条件不满足时，线程将对互斥量解锁，并且重新开始等待。这就是为什么用std::unique_lock而不使用std::lock_guard——等待中的线程必须在等待期间解锁互斥量，并在这这之后对互斥量再次上锁，而std::lock_guard没有这么灵活。如果互斥量在线程休眠期间保持锁住状态，准备数据的线程将无法锁住互斥量，也无法添加数据到队列中；同样的，等待线程也永远不会知道条件何时满足。
+
+条件变量的wait除了以上提到的这种输入参数以外还有一种什么都不用输入的情况。这种wait就是仅仅可以使当前线程进入等待状态以及被唤醒，本身并不对条件变量进行判断，所以只能在外界进行条件的判断：
+```c++
+std::unique_lock<std::mutex> lock(m_mutex);
+while(!m_isReady)  
+{
+  m_condition.wait(lock);
+......
+}
+```
+但其实这种写法与m_condition.wait(lock, m_isReady)效果是一样的，所以最好还是使用前面的那种，这里就此解释一下条件变量的执行顺序和为什么要用while。
+
+条件变量使用的顺序是先上锁，这里是为了不再让别人对标志进行修改。检测标志，达到条件时继续；未达到条件时进入暂时释放锁并进入等待状态。这里的等待状态与普通的阻塞不同，阻塞是一种被动状态，是线程在竞争锁而得不到；等待是是一种主动的状态，是线程已经拿到锁但主动放弃，等时机到了又会再拿回来。假设这时有另一个线程唤醒了本线程，这时本线程依然从m_condition.wait(lock)开始，这里就体现出使用while而不使用if的好处了。这里使用while和if在第一次检测标志的时候其实都是一样的，但是考虑一下这种情况：
+
+假设此时有线程A,C买票，线程A调用wait方法进入等待队列，线程C买票时发现线程B在退票，获取锁失败，线程C阻塞，进入阻塞队列，线程B退票时，余票数量+1，线程B调用notify方法后，线程C马上竞争获取到锁，购票成功后余票为0，而线程A此时正处于wait方法醒来过程中的第三步（竞争获取锁获取锁），当线程C释放锁，线程A获取锁后，会执行购买的操作，而此时是没有余票的。
+
+这种情况称为虚假唤醒，也就是说虽然唤醒了但是标志上根本没有达到线程需要的状态。这时如果使用的是if，那么线程从m_condition.wait(lock)处被唤醒时就不会再经过检查，而是直接进行接下来的操作，这就会造成问题；如果使用while，则从m_condition.wait(lock)处开始时还可以再检查一遍标志是否合乎要求，也就不会因为虚假唤醒而产生后面的问题。data_cond.wait(lk,[]{return !data_queue.empty();})的内部就是使用了while，因此不会因为虚假唤醒出现问题。
+
+### 使用条件变量构建线程安全队列
+```c++
+#include <memory> // 为了使用std::shared_ptr
+
+template<typename T>
+class threadsafe_queue
+{
+public:
+  threadsafe_queue();
+  threadsafe_queue(const threadsafe_queue&);
+  threadsafe_queue& operator=(
+      const threadsafe_queue&) = delete;  // 不允许简单的赋值
+
+  void push(T new_value);
+
+  bool try_pop(T& value);  // 1
+  std::shared_ptr<T> try_pop();  // 2
+
+  void wait_and_pop(T& value);
+  std::shared_ptr<T> wait_and_pop();
+
+  bool empty() const;
+};
+```
+```c++
+#include <queue>
+#include <memory>
+#include <mutex>
+#include <condition_variable>
+
+template<typename T>
+class threadsafe_queue
+{
+private:
+  mutable std::mutex mut;  // 1 互斥量必须是可变的 
+  std::queue<T> data_queue;
+  std::condition_variable data_cond;
+public:
+  threadsafe_queue()
+  {}
+  threadsafe_queue(threadsafe_queue const& other)
+  {
+    std::lock_guard<std::mutex> lk(other.mut);
+    data_queue=other.data_queue;
+  }
+
+  void push(T new_value)
+  {
+    std::lock_guard<std::mutex> lk(mut);
+    data_queue.push(new_value);
+    data_cond.notify_one();
+  }
+
+  void wait_and_pop(T& value)
+  {
+    std::unique_lock<std::mutex> lk(mut);
+    data_cond.wait(lk,[this]{return !data_queue.empty();});
+    value=data_queue.front();
+    data_queue.pop();
+  }
+
+  std::shared_ptr<T> wait_and_pop()
+  {
+    std::unique_lock<std::mutex> lk(mut);
+    data_cond.wait(lk,[this]{return !data_queue.empty();});
+    std::shared_ptr<T> res(std::make_shared<T>(data_queue.front()));
+    data_queue.pop();
+    return res;
+  }
+
+  bool try_pop(T& value)
+  {
+    std::lock_guard<std::mutex> lk(mut);
+    if(data_queue.empty())
+      return false;
+    value=data_queue.front();
+    data_queue.pop();
+    return true;
+  }
+
+  std::shared_ptr<T> try_pop()
+  {
+    std::lock_guard<std::mutex> lk(mut);
+    if(data_queue.empty())
+      return std::shared_ptr<T>();
+    std::shared_ptr<T> res(std::make_shared<T>(data_queue.front()));
+    data_queue.pop();
+    return res;
+  }
+
+  bool empty() const
+  {
+    std::lock_guard<std::mutex> lk(mut);
+    return data_queue.empty();
+  }
+};
+```
