@@ -1508,3 +1508,88 @@ public:
   }
 };
 ```
+
+## 使用期望等待一次性事件
+很多时候我们会需要等待一个一次性的任务，例如人可以在等飞机的时候去逛免税店，等飞机通知你的时候才去登记。放在程序中，有时候我们会先设定好一个线程，让这个线程先自己运行，然后先处理当前的事情，等处理完了再从线程处拿到最终的处理结果。这种时候需要使用future。
+
+C++标准库模型将这种一次性事件称为期望(future)。当一个线程需要等待一个特定的一次性事件时，在某种程度上来说它就需要知道这个事件在未来的表现形式。之后，这个线程会周期性(较短的周期)的等待或检查，事件是否触发(看看时间到不到登机的时候)；在检查期间也会执行其他任务(逛免税店)。另外，在等待任务期间它可以先执行另外一些任务，直到对应的任务触发，而后等待期望的状态会变为就绪(ready)。一个“期望”可能是数据相关的(比如，你的登机口编号)，也可能不是。当事件发生时(并且期望状态为就绪)，这个“期望”就不能被重置。
+
+在C++标准库中，有两种“期望”，使用两种类型模板实现，声明在头文件中: 唯一期望(unique futures)(std::future<>)和共享期望(shared futures)(std::shared_future<>)。这是仿照std::unique_ptr和std::shared_ptr。std::future的实例只能与一个指定事件相关联（也就是说只能get一次值，之后再get就会报错），而std::shared_future的实例就能关联多个事件（当多个其他线程也想处理这份结果，也就是想多次get()时就可以用shared_future）。
+
+### 带返回值的后台任务
+前面已经说了，一定需要线程能够回传处理结果（到登机时间了机场一定要广播），所以就需要线程提供一个返回值。但是一般的thread并没有这个功能，这时可以使用std::async。
+
+std::async可以启动一个异步的任务，会返回一个future对象，这个对象将持有本线程最终计算出的结果。当需要这个值的时候就使用get()函数。假如在调用get的时候还没有完全计算出结果，则会阻塞一直到算出来。
+```c++
+#include <future>
+#include <iostream>
+
+int find_the_answer_to_ltuae();
+void do_other_stuff();
+int main()
+{
+  std::future<int> the_answer=std::async(find_the_answer_to_ltuae);
+  do_other_stuff();
+  std::cout<<"The answer is "<<the_answer.get()<<std::endl;
+}
+```
+如果想要有其他的参数的话就跟thread一样：
+```c++
+string dayin(string str){
+    cout<<str<<endl;
+    return str+'0';
+}
+
+int main()
+{
+    auto f1=std::async(dayin, "int");
+    auto f=f1.get();
+}
+```
+可以输入的函数还有其他方法：
+```c++
+#include <string>
+#include <future>
+struct X
+{
+  void foo(int,std::string const&);
+  std::string bar(std::string const&);
+};
+X x;
+auto f1=std::async(&X::foo,&x,42,"hello");  // 调用p->foo(42, "hello")，p是指向x的指针
+auto f2=std::async(&X::bar,x,"goodbye");  // 调用tmpx.bar("goodbye")， tmpx是x的拷贝副本
+struct Y
+{
+  double operator()(double);
+};
+Y y;
+auto f3=std::async(Y(),3.141);  // 调用tmpy(3.141)，tmpy通过Y的移动构造函数得到
+auto f4=std::async(std::ref(y),2.718);  // 调用y(2.718)
+X baz(X&);
+std::async(baz,std::ref(x));  // 调用baz(x)
+class move_only
+{
+public:
+  move_only();
+  move_only(move_only&&)
+  move_only(move_only const&) = delete;
+  move_only& operator=(move_only&&);
+  move_only& operator=(move_only const&) = delete;
+
+  void operator()();
+};
+auto f5=std::async(move_only());  // 调用tmp()，tmp是通过std::move(move_only())构造得到
+```
+注意，std::async()创建异步任务，可能创建也可能不创建新线程，如果一定要创建新线程则可以使用std::launch::async参数：
+```c++
+auto f6=std::async(std::launch::async,Y(),1.2);  // 在新线程上执行
+```
+还可以用std::launch::defered，用来表明函数调用被延迟到wait()或get()函数调用时才执行：
+```c++
+auto f7=std::async(std::launch::deferred,baz,std::ref(x));  // 在wait()或get()调用时执行
+auto f8=std::async(
+              std::launch::deferred | std::launch::async,
+              baz,std::ref(x));  // 实现选择执行方式
+auto f9=std::async(baz,std::ref(x));
+f7.wait();  //  调用延迟函数
+```
