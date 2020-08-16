@@ -1251,7 +1251,7 @@ lambda表达式：
 [capture list] (params list) mutable exception-> return type { function body }
 ```
 各项具体含义如下
-- capture list：捕获外部变量列表
+- capture list：捕获外���变量列表
 - params list：形参列表（没有形参的可以省略）
 - mutable指示符：用来说用是否可以修改捕获的变量（可省）
 - exception：异常设定（可省）
@@ -1593,3 +1593,201 @@ auto f8=std::async(
 auto f9=std::async(baz,std::ref(x));
 f7.wait();  //  调用延迟函数
 ```
+### 任务与期望
+以上的std::async可以将一个函数在后台的一个线程中运行并返回一个future的值，那么假如我们不想让这个函数直接在后台线程中运行，而是能够让我们自己决定开始运行，并让它返回一个future该咋办？办法是使用packaged_task。
+
+packaged_task最常见的一种用法就是在线程间传递任务，也就是作为一种任务队列：
+```c++
+#include <deque>
+#include <mutex>
+#include <future>
+#include <thread>
+#include <utility>
+
+std::mutex m;
+std::deque<std::packaged_task<void()> > tasks;
+
+bool gui_shutdown_message_received();
+void get_and_process_gui_message();
+
+void gui_thread()  // 1
+{
+  while(!gui_shutdown_message_received())  // 2
+  {
+    get_and_process_gui_message();  // 3
+    std::packaged_task<void()> task;
+    {
+      std::lock_guard<std::mutex> lk(m);
+      if(tasks.empty())  // 4
+        continue;
+      task=std::move(tasks.front());  // 5
+      tasks.pop_front();
+    }
+    task();  // 6
+  }
+}
+
+std::thread gui_bg_thread(gui_thread);
+
+template<typename Func>
+std::future<void> post_task_for_gui_thread(Func f)
+{
+  std::packaged_task<void()> task(f);  // 7
+  std::future<void> res=task.get_future();  // 8
+  std::lock_guard<std::mutex> lk(m);  // 9
+  tasks.push_back(std::move(task));  // 10
+  return res;
+}
+```
+
+这段代码十分简单：图形界面线程①循环直到收到一条关闭图形界面的信息后关闭②，进行轮询界面消息处理③，例如用户点击，和执行在队列中的任务。当队列中没有任务④，它将再次循环；除非，他能在队列中提取出一个任务⑤，然后释放队列上的锁，并且执行任务⑥。这里，“期望”与任务相关，当任务执行完成时，其状态会被置为“就绪”状态。
+
+将一个任务传入队列，也很简单：提供的函数⑦可以提供一个打包好的任务，可以通过这个任务⑧调用get_future()成员函数获取“期望”对象，并且在任务被推入列表⑨之前，“期望”将返回调用函数⑩。当需要知道线程执行完任务时，向图形界面线程发布消息的代码，会等待“期望”改变状态；否则，则会丢弃这个“期望”。
+
+### 使用std::promises
+除了对于函数进行封装以外，还可以使用promises存储一个值，可以让它能够在不同的线程中进行读取或者修改：
+```c++
+std::promise<int> prom;
+
+void print_global_promise () {
+    std::future<int> fut = prom.get_future();
+    int x = fut.get();
+    std::cout << "value: " << x << '\n';
+}
+
+int main ()
+{
+    std::thread th1(print_global_promise);
+    prom.set_value(10);
+    th1.join();
+
+    prom = std::promise<int>();    // prom 被move赋值为一个新的 promise 对象.
+
+    std::thread th2 (print_global_promise);
+    prom.set_value (20);
+    th2.join();
+
+  return 0;
+}
+```
+注意这里如果得不到fut.get()的值是会一直阻塞的。
+
+### 为“期望”存储“异常”
+例如现在写了一个会出现异常的函数：
+```c++
+double square_root(double x)
+{
+  if(x<0)
+  {
+    throw std::out_of_range(“x<0”);
+  }
+  return sqrt(x);
+}
+```
+那么这时如果我们使用一个async来使用它，并且向他输入一个肯定会出异常的参数-1：
+```c++
+std::future<double> f=std::async(square_root,-1);
+double y=f.get();
+```
+那么这时候在函数square_root的运行过程中并不会直接报错，而是在double y=f.get();的时候才会报出错来，换句话说，这个异常就会存储到“期望”的结果数据中，之后“期望”的状态被置为“就绪”，之后调用get()会抛出这个存储的异常。当你将函数打包入std::packaged_task任务包中后，在这个任务被调用时，同样的事情也会发生；当打包函数抛出一个异常，这个异常将被存储在“期望”的结果中，准备在调用get()再抛出。
+
+当然，通过函数的显式调用，std::promise也能提供同样的功能。当你希望存入的是一个异常而非一个数值时，你就需要调用set_exception()成员函数，而非set_value()。这通常是用在一个catch块中，并作为算法的一部分，为了捕获异常，使用异常填充“承诺”：
+```c++
+extern std::promise<double> some_promise;
+try
+{
+  some_promise.set_value(calculate_value());
+}
+catch(...)
+{
+  some_promise.set_exception(std::current_exception());
+}
+```
+这里使用了std::current_exception()来检索抛出的异常；可用std::copy_exception()作为一个替换方案，std::copy_exception()会直接存储一个新的异常而不抛出：
+```c++
+some_promise.set_exception(std::copy_exception(std::logic_error("foo ")));
+```
+这就比使用try/catch块更加清晰，当异常类型是已知的，它就应该优先被使用；不是因为代码实现简单，而是它给编译器提供了极大的代码优化空间。
+
+### 多个线程的等待
+直到现在，所有例子都在用std::future。不过，std::future也有局限性，在很多线程在等待的时候，只有一个线程能获取等待结果。当多个线程需要等待相同的事件的结果，你就需要使用std::shared_future来替代std::future了。因为std::future是只移动的，所以其所有权可以在不同的实例中互相传递，但是只有一个实例可以获得特定的同步结果；而std::shared_future实例是可拷贝的，所以多个对象可以引用同一关联“期望”的结果。
+
+使用以下方法可以从future中返回shared_future
+```c++
+#include <iostream>       // std::cout
+#include <future>         // std::async, std::future, std::shared_future
+
+int do_get_value() { return 10; }
+
+int main ()
+{
+    std::future<int> fut = std::async(do_get_value);
+    std::shared_future<int> shared_fut = fut.share();
+
+    // 共享的 future 对象可以被多次访问.
+    std::cout << "value: " << shared_fut.get() << '\n';
+    std::cout << "its double: " << shared_fut.get()*2 << '\n';
+
+    return 0;
+}
+```
+
+## 限定等待时间
+C++多线程中的一些等待函数允许设定超时。有两类可指定的超时，一是基于时间段的超时等待，一般为 _for 后缀的方法；或者绝对超时，等到一个时间点，一般为 _until 后缀的方法。例如， std::condition_variable 就具有 wait_for() 和 wait_until() 成员函数。
+
+可接受超时的函数：
+![](wait_for.jpg)
+
+```c++
+#include <iostream>
+#include <atomic>
+#include <condition_variable>
+#include <thread>
+#include <chrono>
+using namespace std::chrono_literals;
+ 
+std::condition_variable cv;
+std::mutex cv_m;
+std::atomic<int> i{0};
+ 
+void waits(int idx)
+{
+    std::unique_lock<std::mutex> lk(cv_m);
+    auto now = std::chrono::system_clock::now();
+    if(cv.wait_until(lk, now + idx*100ms, [](){return i == 1;}))
+        std::cerr << "Thread " << idx << " finished waiting. i == " << i << '\n';
+    else
+        std::cerr << "Thread " << idx << " timed out. i == " << i << '\n';
+}
+ 
+void signals()
+{
+    std::this_thread::sleep_for(120ms);
+    std::cerr << "Notifying...\n";
+    cv.notify_all();
+    std::this_thread::sleep_for(100ms);
+    i = 1;
+    std::cerr << "Notifying again...\n";
+    cv.notify_all();
+}
+ 
+int main()
+{
+    std::thread t1(waits, 1), t2(waits, 2), t3(waits, 3), t4(signals);
+    t1.join(); 
+    t2.join();
+    t3.join();
+    t4.join();
+}
+
+/*
+Thread 1 timed out. i == 0
+Notifying...
+Thread 2 timed out. i == 0
+Notifying again...
+Thread 3 finished waiting. i == 1
+*/
+```
+总之这种函数的作用就是进行等待，它们可以等待一段时间或者等到某个时间点，如果在这一段时间内或者在时间点前被唤醒且条件达到则获得锁并执行后续内容，且会有返回值std::cv_status::no_timeout。假如在这一段时间内或者在时间点前没被唤醒或者条件都没达到，则不再等待并返回一个值std::cv_status::timeout。
+
+## 使用同步操作简化代码
