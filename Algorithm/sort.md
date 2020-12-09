@@ -46,6 +46,40 @@ void BubbleSort(int array[], int n)
         }
 }
 ```
+```c++
+//单链表排序版本
+struct ListNode{
+    int val;
+    ListNode *next;
+    ListNode(int val):val(val), next(nullptr){};
+};
+
+void bubblesort(ListNode *head){
+    ListNode *cur1=head;
+    ListNode *cur2=head;
+    while(cur1){
+        while(cur2 && cur2->next){
+            if(cur2->val > cur2->next->val){
+                int t = cur2->next->val;
+                cur2->next->val=cur2->val;
+                cur2->val=t;
+            }
+            cur2=cur2->next;
+        }
+        cur2=head;
+        cur1=cur1->next;
+    }
+}
+int main(){
+    ListNode *cur1=new ListNode(3);
+    cur1->next=new ListNode(1);
+    cur1->next->next=new ListNode(2);
+    cur1->next->next->next=new ListNode(5);
+    cur1->next->next->next->next=new ListNode(6);
+
+    bubblesort(cur1);
+}
+```
 
 # 直接选择排序
 选择排序从小到大排序：一开始从0~n-1区间上选择一个最小值，将其放在位置0上，然后在1~n-1范围上选取最小值放在位置1上。重复过程直到剩下最后一个元素，数组即为有序。
@@ -107,50 +141,28 @@ void InsertSort(int a[], int n)
 ![](sort3.gif)
 
 ```c++
-void quicksort(int a[], int left, int right) {
-    int i, j, t, privotkey;
-    if (left > right)   //（递归过程先写结束条件）
-        return;
-
-    privotkey = a[left]; //temp中存的就是基准数（枢轴）
-    i = left;
-    j = right;
-    while (i < j) {
-        //顺序很重要，要先从右边开始找（最后交换基准时换过去的数要保证比基准小，因为基准选取数组第一个数）
-        while (a[j] >= privotkey && i < j) {
-            j--;
-        }
-        a[i] = a[j];
-        //再找左边的
-        while (a[i] <= privotkey && i < j) {
-            i++;
-        }
-        a[j] = a[i];
+void quicksort(vector<int> &nums, int left, int right){
+    if(left>=right) return;
+    int i=left, j=right;
+    int pivot=nums[i];
+    while(i<j){
+        while(pivot<nums[j] && i<j) j--;
+        nums[i]=nums[j];
+        while(pivot>=nums[i] && i<j) i++;
+        nums[j]=nums[i];
     }
-    //最终将基准数归位
-    a[i] = privotkey;
-
-    quicksort(a, left, i - 1);//继续处理左边的，这里是一个递归的过程
-    quicksort(a, i + 1, right);//继续处理右边的 ，这里是一个递归的过程
+    nums[i]=pivot;
+    quicksort(nums, left, i-1);
+    quicksort(nums, i+1, right);
 }
 
-int main()
-{
-	int array[]={34,65,12,43,67,5,78,10,3,70},k;
-	int len=sizeof(array)/sizeof(int);
-	cout<<"The orginal arrayare:"<<endl;
-	for(k=0;k<len;k++)
-		cout<<array[k]<<",";
-	cout<<endl;
-	quickSort(array,0,len-1);
-	cout<<"The sorted arrayare:"<<endl;
-	for(k=0;k<len;k++)
-		cout<<array[k]<<",";
-	cout<<endl;
-	system("pause");
-	return 0;
+int main(){
+    vector<int> nums={10,11,13,14,16,18,15,17,12,19};
+    quicksort(nums, 0, nums.size()-1);
 }
 ```
+
+这里注意一下，每一次都是使用开头的数作为pivot，这时开始遍历必须从结尾开始（也就是上述代码中的顺序，必须j开始）。这是因为假如现在从左边i开始的话，那当遇到一个大于pivot的值，就应该放到nums[j]那去，但是nums[i]有pivot记着，最后还能还原回去，这nums[j]可就没人记着了，原来的nums[j]就丢失了。因此只能先从j哪一端开始。假如一开始pivot就选的是j那一端的，那就可以先从i开始了。总而言之就是必须先从pivot的对端开始。
 
 在最优情况下，每次都划分得很均匀，如果排序n个关键字，其递归树的深度就为log2n+1，也就是要递归log2n+1次，同时每次递归都要比较当前区间所有的数，所以复杂度是nlogn。如果每一次划分后分区比较平衡，则递归次数少；如果划分后分区不平衡，则递归次数多。但快速排序的递归次数与分区处理顺序无关，即先处理较长的分区或先处理较短的分区都不影响递归次数。
 
