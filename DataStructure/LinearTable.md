@@ -11,24 +11,23 @@
 
 <!-- TOC -->
 
-- [线性表](#线性表)
-  - [数组](#数组)
-  - [链表](#链表)
-  - [双向链表](#双向链表)
-  - [数组和链表的区别](#数组和链表的区别)
-  - [队列](#队列)
-  - [队列的数组实现](#队列的数组实现)
-  - [队列的链表实现](#队列的链表实现)
-  - [栈](#栈)
-  - [栈的数组实现](#栈的数组实现)
-  - [栈的链表实现](#栈的链表实现)
+- [1. 数组](#1-数组)
+- [2. 链表](#2-链表)
+- [3. 双向链表](#3-双向链表)
+- [4. 数组和链表的区别](#4-数组和链表的区别)
+- [5. 队列](#5-队列)
+- [6. 队列的数组实现](#6-队列的数组实现)
+- [7. 队列的链表实现](#7-队列的链表实现)
+- [8. 栈](#8-栈)
+- [9. 栈的数组实现](#9-栈的数组实现)
+- [10. 栈的链表实现](#10-栈的链表实现)
+- [11. 堆](#11-堆)
 
 <!-- /TOC -->
 
-# 线性表
 线性表就是n个具有相同特性的数据元素的有限序列。
 
-## 数组
+# 1. 数组
 c++中的数组一般用int[]来表示，可以存储一组相同类型的数据。数组在声明时必须预留出空间，在使用前要申请空间，所以很有可能浪费内存。数组所占用的空间是一段连续的区域，所以所有的数据的地址都是连续的。数组很难在中间插入数据，但是读取的效率比较高。
 
 初始化数组：
@@ -45,7 +44,7 @@ double salary = balance[9];
 
 在STL中，array是可以代替数组的，与数组的基本特点一致。针对数组和array无法变长的缺点，STL中提供了vector。
 
-## 链表
+# 2. 链表
 链表虽然也是将相同的数据存储成线性模式，但是它与数组有很大不同，链表的存储空间是离散的，并不会占用一整块连续的空间，所以每个元素除了存储自己的值以外还要存储下一个元素的地址。链表比较容易在中间插入或者删减数据，但是读取效率很低，因为只能从头到尾遍历。
 
 C++链表的一般写法：
@@ -59,7 +58,7 @@ C++链表的一般写法：
 
 STL中list可以代替链表。
 
-## 双向链表
+# 3. 双向链表
 双向链表，又称为双链表，是链表的一种，它的每个数据结点中都有两个指针，分别指向直接后继和直接前驱。所以，从双向链表中的任意一个结点开始，都可以很方便地访问它的前驱结点和后继结点。一般我们都构造双向循环链表。
 
 ![](Doubly-linked.png)
@@ -78,17 +77,17 @@ p->pre = q->pre;//p的前驱
 q->pre->next = p;  //这一步要在前面，
 q->pre = p;
 ```
-## 数组和链表的区别
+# 4. 数组和链表的区别
 - 存储：数组时连续的内存空间，链表不需要连续
 - 长度：数组的长度需要预先确定，若超出数组则会溢出；链表的长度是动态扩展的
 - 随机访问：即按照需要访问线性表中第n个元素。数组可以随机访问，时间复杂度为O(1)；链表不支持随机访问，平均需要O(n)
 - 插入、删除：数组其实位置的插入和删除， 时间复杂度为O(n)；链表的时间复杂度为O(1)
 - 数组从栈中分配空间，链表从堆中分配空间
 
-## 队列
+# 5. 队列
 队列的最大特点就是依照存储顺序，先进先出。一般改变队列中元素的操作方法只有两个——push与pop。push是把元素从队尾插入，pop是把元素从队头删除。
 
-## 队列的数组实现
+# 6. 队列的数组实现
 队列的数组实现有两种形式，一种是线性实现，另一种是循环实现。
 
 线性实现如下所示，front表示当前队列的队首，rear表示当前队列的队尾。因为数组必须要提前声明占用的空间，所以线性实现有一定的局限性，当rear抵达max-1的时候就不能再让元素入队了。此时front前面的空间将被浪费，因为前面的都出去了，然后就没法再被使用。
@@ -160,7 +159,7 @@ public:
 };
 ```
 
-## 队列的链表实现
+# 7. 队列的链表实现
 链表的实现总体来说就简单理解一些，利用两个结点，head记录链表头即队头，rear记录链表尾即队尾。
 ```c++
 template <class T>
@@ -225,10 +224,10 @@ public:
 };
 ```
 
-## 栈
+# 8. 栈
 栈跟队列相反，存储的数据按照顺序先进后出
 
-## 栈的数组实现
+# 9. 栈的数组实现
 因为一开始入栈的数据会最晚出去，出去栈就空了，所以不用循环数组：
 ```c++
 #define MAXSIZE 10;
@@ -326,7 +325,7 @@ private:
 };
 ```
 
-## 栈的链表实现
+# 10. 栈的链表实现
 链表实现栈最大的难点是出栈时该怎么让指针回到上一个数据。为了避免这种问题，链表的栈push进来的数据全部都插在head后面：
 ```c++
 template <typename T> 
@@ -394,4 +393,132 @@ template<typename T>
 bool Stack<T>::isEmpty() {
     return length == 0;
 }
+```
+
+# 11. 堆
+```c++
+template<class T>
+struct Less
+{
+    bool operator()(const T& left, const T& right) const
+    {
+        return left < right;
+    }
+};
+
+template<class T>
+struct Greater
+{
+    bool operator()(const T& left, const T& right) const
+    {
+        return left > right;
+    }
+};
+
+
+template<class T, class Compare=Less<T>>
+class Heap
+{
+public:
+    Heap()//无参的构造函数（系统不会给无参构造函数），开始堆是空的不需要做什么事
+    {}
+    Heap(T* a, size_t n)
+    {
+        _a.reserve(n);//开空间
+        for (size_t i = 0; i < n; ++i)
+        {
+            _a.push_back(a[i]);
+
+        }
+        //建堆,找最后一个非叶子节点
+        for (int i = (_a.size() - 2) / 2; i >= 0; --i)//不用size_t，因为i在这可能等于0，用size_t会死循环
+        {
+            AdjustDown(i);
+        }
+    }
+    //向下调整
+    void AdjustDown(int root)
+    {
+        Compare com;
+        int parent = root;
+        size_t child = parent * 2 + 1;//默认为左孩子
+        while (child < _a.size())
+        {
+            //选出小孩子
+            //if (child+1 > _a.size() && _a[child + 1]< _a[child])
+            if (child + 1 < _a.size() && com(_a[child + 1], _a[child]))//这里只判断一次，因此如果不是左孩子就是右孩子，不会走走到其他孩子那。这里就是找到最小的（或者最大的）
+            {
+                ++child;
+            }
+
+            //if (_a[child] < _a[parent])
+            if (com(_a[child], _a[parent]))
+            {
+                swap(_a[child], _a[parent]);//交换值
+                parent = child;
+                child = parent * 2 + 1;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    //向上调整
+    void AdjustUp(int child)
+    {
+        Compare com;
+        int parent = (child - 1) / 2;
+        while (parent >= 0)
+        {
+            //if (_a[child] < _a[parent])
+            if (com(_a[child], _a[parent]))
+            {
+                swap(_a[parent], _a[child]);
+                child = parent;
+                parent = (child - 1) / 2;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+    }
+    //最后插入
+    void Push(const T&x)
+    {
+        _a.push_back(x);
+        AdjustUp(_a.size() - 1);
+    }
+    //删除最大数
+    void Pop()
+    {
+        assert(!_a.empty());
+        swap(_a[0], _a[_a.size() - 1]);
+        _a.pop_back();
+        AdjustDown(0);
+
+    }
+    //取顶元素
+    T& Top()
+    {
+        assert(!_a.empty());
+        return _a[0];
+    }
+    size_t Size()
+    {
+        return _a.size();
+    }
+
+    bool Empty()
+    {
+        return _a.empty();
+    }
+
+
+private:
+    vector<T> _a;
+
+};
 ```
