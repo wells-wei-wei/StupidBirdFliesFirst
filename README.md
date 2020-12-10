@@ -7,6 +7,8 @@
   - [C++11新特性](C++Fundamental/c++11.md)
   - [c++11多线程](C++Fundamental/Multithreading.md)
   - [Cmake](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/C%2B%2BFundamental/cmake.md)
+  - [设计模式](C++Fundamental/DesignPatterns.md)
+  - [STL](C++Fundamental/STL.md)
 - 数据结构
   - [线性表](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataStructure/LinearTable.md)
   - [树](DataStructure/tree.md)
