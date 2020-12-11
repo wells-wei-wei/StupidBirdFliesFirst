@@ -39,7 +39,7 @@
     - [unordered_map 与map的区别？使用场景？](#unordered_map-与map的区别使用场景)
     - [unordered_map、unordered_set的常用函数](#unordered_mapunordered_set的常用函数)
 - [迭代器](#迭代器)
-  - [迭代器的底层机制和失效的问题](#迭代器的底层机制和失效的问题)
+  - [迭代器的底层机制](#迭代器的底层机制)
   - [迭代器的种类](#迭代器的种类)
   - [迭代器失效的问题](#迭代器失效的问题)
     - [插入操作](#插入操作)
@@ -366,7 +366,7 @@ unordered_map.find(key) 查找元素，返回迭代器
 unordered_map.count(key) 返回匹配给定主键的元素的个数 
 
 # 迭代器
-## 迭代器的底层机制和失效的问题
+## 迭代器的底层机制
 1、迭代器的底层原理
 迭代器是连接容器和算法的一种重要桥梁，通过迭代器可以在不了解容器内部原理的情况下遍历容器。它的底层实现包含两个重要的部分：萃取技术和模板偏特化。
 
@@ -430,12 +430,14 @@ struct TraitsHelper<float> {
 - 对于vector和string，如果容器内存被重新分配，iterators,pointers,references失效；如果没有重新分配，那么插入点之前的iterator有效，插入点之后的iterator失效；
 - 对于deque，如果插入点位于除front和back的其它位置，iterators,pointers,references失效；当我们插入元素到front和back时，deque的迭代器失效，但reference和pointers有效；
 - 对于list和forward_list，所有的iterator,pointer和refercnce有效。
+- 对于unordered_map，由于内部实现是哈希表，如果在插入时引起了rehash就会全部失效
+- 对于map，底层实现为红黑树，插入时不受影响
   
 ### 删除操作
 - 对于vector和string，删除点之前的iterators,pointers,references有效；off-the-end迭代器总是失效的；
 - 对于deque，如果删除点位于除front和back的其它位置，iterators,pointers,references失效；当我们插入元素到front和back时，off-the-end失效，其他的iterators,pointers,references有效；
 - 对于list和forward_list，所有的iterator,pointer和refercnce有效。
-- 对于关联容器map来说，如果某一个元素已经被删除，那么其对应的迭代器就失效了，不应该再被使用，否则会导致程序无定义的行为。
+- 对于关联容器map来说，如果某一个元素已经被删除，那么其对应的迭代器就失效了，不应该再被使用，否则会导致程序无定义的行为，其他迭代器不受影响。
 
 # STL容器的线程安全性
 ## 线程安全的情况
