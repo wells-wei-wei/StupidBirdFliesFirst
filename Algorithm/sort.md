@@ -28,6 +28,7 @@
 # 冒泡排序
 冒泡排序从小到大排序：一开始交换的区间为0\~N-1，将第1个数和第2个数进行比较，前面大于后面，交换两个数，否则不交换。再比较第2个数和第三个数，前面大于后面，交换两个数否则不交换。依次进行，最大的数会放在数组最后的位置。然后将范围变为0\~N-2，数组第二大的数会放在数组倒数第二的位置。依次进行整个交换过程，最后范围只剩一个数时数组即为有序。
 
+其外层循环执行 N - 1次。内层循环最多的时候执行N次，最少的时候执行1次，平均执行 (N+1)/2次。所以最坏的复杂度是n²，最好是n
 ![](sort.gif)
 
 ```c++
@@ -133,6 +134,52 @@ void InsertSort(int a[], int n)
 }
 ```
 
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* insertionSortList(ListNode* head) {
+
+        if(head==NULL||head->next==NULL) return head;
+        ListNode* newhead = new ListNode(INT_MIN);
+        newhead->next = head;
+        head = newhead;
+        ListNode *rear = head->next;//有序链表最后一个节点
+        ListNode *p = rear->next;//待排序插入节点
+        while(p!=NULL){
+            //将p节点移除
+            rear->next = p->next;
+            p->next = NULL;
+            //确定位置
+            ListNode *pre = head;//保存插入位置的前一个节点
+            ListNode *temp = head->next;
+            while(temp->val <= p->val && temp != rear){
+                pre = temp;
+                temp = temp->next;
+            }
+            if(temp->val > p->val){
+                p->next = temp;
+                pre->next = p;
+            }else{
+                p->next = temp->next;
+                temp->next = p;
+                rear = p;
+            }
+            p = rear->next;
+        }
+        return head->next;
+
+    }
+};
+```
+
 如果原序列基本上是有序的，此时选用插入排序比较的次数会比较少
 
 # 快速排序
@@ -218,6 +265,53 @@ void HeapSort (int data[], int length)
 }
 ```
 
+建立一个堆：
+```c++
+template<class T>
+class Heap{
+public:
+    Heap(vector<int> &nums):nums(nums){
+        sortList();//生成一个大顶堆
+    };
+    /*这个函数可以从小到大排序，即先排成一个大顶堆，再把头尾交换
+    void sortListVec(){
+        int parent=nums.size()/2-1;
+        for(int i=parent;i>=0;i--){
+            AjustFromUp(i, nums.size()-1);
+        }
+        for(int i=nums.size()-1;i>=0;i--){
+            swap(nums[0],nums[i]);
+            AjustFromUp(0, i-1);
+        }
+    }
+    */
+    void sortList(){
+        int parent=nums.size()/2-1;//第一个非叶节点
+        for(int i=parent;i>=0;i--){
+            AjustFromUp(i, nums.size()-1);
+        }
+    }
+    void pop(){
+        nums.erase(nums.begin());
+        sortList();
+    }
+    void AjustFromUp(int parent, int bottom){
+        while(parent<bottom && parent*2+1<=bottom){
+            int child=parent*2+1;
+            if(nums[child]<nums[child+1] && child<bottom) child++;
+            if(nums[parent]<nums[child]){
+                swap(nums[child], nums[parent]);
+                parent=child;
+            }
+            else break;
+        }
+        return;
+    }
+private:
+    vector<int> nums;
+};
+```
+
 # 希尔排序
 希尔排序是插入排序改良的算法，希尔排序步长从大到小调整，第一次循环后面元素逐个和前面元素按间隔步长进行比较并交换，直至步长为1，步长选择是关键。
 ```c++
@@ -251,50 +345,37 @@ void SheelSort( int array[], int n)
 
 ```c++
 ////实现归并，并把数据都放在list1里面 
-void merging(int *list1, int list1_size, int *list2,  int list2_size)
-{
-    int i=0, j=0, k=0, m=0;
-    int temp[MAXSIZE];
- 
-    while(i < list1_size && j < list2_size)
-    {
-        if(list1[i]<list2[j])
-        {
-            temp[k++] = list1[i++];//赋值完了以后再各自加一
+void merge(vector<int> &nums, int left ,int mid, int right){
+    vector<int> t;
+    int i=left,j=mid;
+    while(i<mid && j<right){
+        if(nums[i]<nums[j]){
+            t.push_back(nums[i]);
+            i++;
         }
-        else
-        {
-            temp[k++] = list2[j++];
+        else{
+            t.push_back(nums[j]);
+            j++;
         }
     }
-    while(i<list1_size)
-    {
-        temp[k++] = list1[i++];
+    while(i<mid){
+        t.push_back(nums[i]);
+        i++;
     }
-    while(j<list2_size)
-    {
-        temp[k++] = list2[j++];
+    while(j<right){
+        t.push_back(nums[j]);
+        j++;
     }
- 
-    for(m=0; m < (list1_size+list2_size); m++)
-    {
-        list1[m]=temp[m];
-    }
+    for(int m=left;m<right;m++) nums[m]=t[m-left];
 }
 //如果有剩下的，那么说明就是它是比前面的数组都大的，直接加入就可以了 
-void mergeSort(int array[], int n)
-{
-    if(n>1)
-    {
-        int *list1 = array;
-        int list1_size = n/2;
-        int *list2 = array + n/2;
-        int list2_size = n-list1_size;
- 
-        mergeSort(list1, list1_size);
-        mergeSort(list2, list2_size);
- 
-        merging(list1, list1_size, list2, list2_size);
+void mergeSort(vector<int> &nums, int left, int right){
+    if(right-left>1){
+        int mid=(left+right)/2;
+        mergeSort(nums, left, mid);
+        mergeSort(nums, mid, right);
+
+        merge(nums, left, mid, right);
     }
 }
 //归并排序复杂度分析：一趟归并需要将待排序列中的所有记录  
@@ -308,60 +389,96 @@ void mergeSort(int array[], int n)
 ```
 
 ```c++
-void MergeSort(int k[],int n)  
-{  
-    int i,next,left_min,left_max,right_min,right_max;  
-    //动态申请一个与原来数组一样大小的空间用来存储
-    int *temp = (int *)malloc(n * sizeof(int));  
-    //逐级上升，第一次比较2个，第二次比较4个，第三次比较8个。。。  
-    for(i=1; i<n; i*=2)  
-    {  
-        //每次都从0开始，数组的头元素开始  
-        for(left_min=0; left_min<n-i; left_min = right_max)  
-        {  
-            right_min = left_max = left_min + i;  
-            right_max = left_max + i;  
-            //右边的下标最大值只能为n  
-            if(right_max>n)  
-            {  
-                right_max = n;  
-            }  
-            //next是用来标志temp数组下标的，由于每次数据都有返回到K，  
-            //故每次开始得重新置零  
-            next = 0;  
-            //如果左边的数据还没达到分割线且右边的数组没到达分割线，开始循环  
-            while(left_min<left_max&&right_min<right_max)  
-            {  
-                if(k[left_min] < k[right_min])  
-                {  
-                    temp[next++] = k[left_min++];  
-                }  
-                else  
-                {  
-                    temp[next++] = k[right_min++];  
-                }  
-            }  
-            //上面循环结束的条件有两个，如果是左边的游标尚未到达，那么需要把  
-            //数组接回去，可能会有疑问，那如果右边的没到达呢，其实模拟一下就可以  
-            //知道，如果右边没到达，那么说明右边的数据比较大，这时也就不用移动位置了  
- 
-            while(left_min < left_max)  
-            {  
-                //如果left_min小于left_max，说明现在左边的数据比较大  
-                //直接把它们接到数组的min之前就行  
-                k[--right_min] = k[--left_max];  //先减一再赋值
-            }  
-            while(next>0)  
-            {  
-                //把排好序的那部分数组返回该k  
-                k[--right_min] = temp[--next];        
-            }  
-        }  
-    }  
-}  
+void merge(vector<int> &nums, int left ,int mid, int right){
+    vector<int> t;
+    int i=left,j=mid;
+    while(i<mid && j<right){
+        if(nums[i]<nums[j]){
+            t.push_back(nums[i]);
+            i++;
+        }
+        else{
+            t.push_back(nums[j]);
+            j++;
+        }
+    }
+    while(i<mid){
+        t.push_back(nums[i]);
+        i++;
+    }
+    while(j<right){
+        t.push_back(nums[j]);
+        j++;
+    }
+    for(int m=left;m<right;m++) nums[m]=t[m-left];
+}
+
+void mergeSort(vector<int> &nums){
+    int size=1;
+    int left=0;
+    int mid,right;
+    while(size<=nums.size()/2+1){
+        left=0;mid=left+size;right=mid+size;
+        if(right>nums.size()) right=nums.size();
+        while(right<=nums.size()){
+            merge(nums, left, mid, right);
+            left=right;
+            mid=left+size;
+            right=mid+size;
+        }
+        size*=2;
+    }
+    
+}
+
 //非递归的方法，避免了递归时深度为log2N的栈空间，
 //空间只是用到归并临时申请的跟原来数组一样大小的空间，并且在时间性能上也有一定的提升，
 //因此，使用归并排序是，尽量考虑用非递归的方法。
+```
+
+```c++
+//链表版本
+ListNode* merge(ListNode* list1, ListNode* list2){
+    ListNode* ret=new ListNode(0);
+    ListNode* cur=ret;
+    while(list1 && list2){
+        if(list1->val>list2->val){
+            cur->next=new ListNode(list2->val);
+            cur=cur->next;
+            list2=list2->next;
+        }
+        else{
+            cur->next=new ListNode(list1->val);
+            cur=cur->next;
+            list1=list1->next;
+        }
+    }
+    while(list1){
+        cur->next=new ListNode(list1->val);
+        cur=cur->next;
+        list1=list1->next;
+    }
+    while(list2){
+        cur->next=new ListNode(list2->val);
+        cur=cur->next;
+        list2=list2->next;
+    }
+    return ret->next;
+}
+ListNode* sortList(ListNode* head) {
+    if(head && head->next){
+        ListNode* slow=head;
+        ListNode* fast=head;
+        while(fast && fast->next && fast->next->next){
+            slow=slow->next;
+            fast=fast->next->next;
+        }
+        ListNode* list2=slow->next;
+        slow->next=nullptr;
+        return merge(sortList(head), sortList(list2));
+    }
+    else return head;
+}
 ```
 
 # 计数排序
