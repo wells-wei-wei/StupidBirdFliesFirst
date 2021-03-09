@@ -12,6 +12,7 @@
 - 数据结构
   - [线性表](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/DataStructure/LinearTable.md)
   - [树](DataStructure/tree.md)
+  - [哈希表](DataStructure/hash.md)
 - 算法
   - [排序](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/sort.md) 
   - [二叉树](https://github.com/wells-wei-wei/StupidBirdFliesFirst/blob/master/Algorithm/BinaryTree.md)
