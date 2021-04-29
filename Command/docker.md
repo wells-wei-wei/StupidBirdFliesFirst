@@ -7,6 +7,13 @@
  * @FilePath: \StupidBirdFliesFirst\Command\docker.md
 --> 
 # Docker
+## Docker安装
+```
+sudo apt install -y nvidia-docker2
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+出现问题时也可以尝试后两句
 ## Docker模板
 ```
 FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
