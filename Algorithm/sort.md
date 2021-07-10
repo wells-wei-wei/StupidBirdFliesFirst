@@ -208,6 +208,74 @@ int main(){
     quicksort(nums, 0, nums.size()-1);
 }
 ```
+```c++
+// 链表版本（交换值）
+class Solution {
+    public ListNode sortList(ListNode head) {
+        quickSort(head, null);
+        return head;
+    }
+    
+    void quickSort(ListNode head, ListNode tail){
+        if(head == tail || head.next == tail) return;
+        int pivot = head.val;
+        ListNode left = head, cur = head.next;
+        
+        while(cur != tail){
+            if(cur.val < pivot){
+                left = left.next;
+                swap(left, cur);
+            }
+            cur = cur.next;
+        }
+        swap(head, left);
+        quickSort(head, left);
+        quickSort(left.next, tail);
+    }
+
+// 链表版本（交换指针）
+class Solution {
+    public ListNode sortList(ListNode head) {
+        return quickSort(head);
+    }
+
+    ListNode quickSort(ListNode head){
+        if(head == null || head.next == null) return head;
+        
+        int pivot = head.val;
+        // 链表划分
+        ListNode ls = new ListNode(-1), rs = new ListNode(-1);
+        ListNode l = ls, r = rs, cur = head;
+        
+        while(cur != null){
+            if(cur.val < pivot){
+                l.next = cur;
+                l = l.next;
+            }else{
+                r.next = cur;
+                r = r.next;
+            }
+            cur = cur.next;
+        }
+        l.next = rs.next;
+        r.next = null;
+        
+        // 递归调用,先重排右边的,再把指针置空,再重排左边的
+        // 和归并排序很像的
+        ListNode right = quickSort(head.next);
+        head.next = null;
+        ListNode left = quickSort(ls.next);
+        
+        // 拼接左半部分和右半部分
+        cur = left;
+        while(cur.next != null){
+            cur = cur.next;
+        }
+        cur.next = right;
+        return left;
+        
+    }
+```
 
 这里注意一下，每一次都是使用开头的数作为pivot，这时开始遍历必须从结尾开始（也就是上述代码中的顺序，必须j开始）。这是因为假如现在从左边i开始的话，那当遇到一个大于pivot的值，就应该放到nums[j]那去，但是nums[i]有pivot记着，最后还能还原回去，这nums[j]可就没人记着了，原来的nums[j]就丢失了。因此只能先从j哪一端开始。假如一开始pivot就选的是j那一端的，那就可以先从i开始了。总而言之就是必须先从pivot的对端开始。
 
